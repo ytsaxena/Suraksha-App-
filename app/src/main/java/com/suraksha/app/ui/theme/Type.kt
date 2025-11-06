@@ -1,10 +1,12 @@
 package com.suraksha.app.ui.theme
 
+import com.suraksha.app.R
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.Font
 
 // Set of Material typography styles to start with
 val Typography = Typography(
@@ -32,3 +34,6 @@ val Typography = Typography(
     )
     */
 )
+
+val poppinsBold = FontFamily(Font(R.font.poppins_bold))
+val poppinsRegular = FontFamily(Font(R.font.poppins_regular))
