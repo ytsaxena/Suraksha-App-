@@ -13,6 +13,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.suraksha.app.presentation.theme.White
+import com.suraksha.app.presentation.theme.poppinsBold
+import com.suraksha.app.presentation.theme.poppinsRegular
+import com.suraksha.app.presentation.theme.safetyCardBackgroundColor
 
 
 @Composable

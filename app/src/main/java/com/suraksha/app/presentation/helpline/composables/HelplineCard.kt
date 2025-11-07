@@ -19,6 +19,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.suraksha.app.R
+import com.suraksha.app.presentation.theme.colorGrayBold
+import com.suraksha.app.presentation.theme.colorGrayLight
+import com.suraksha.app.presentation.theme.poppinsBold
+import com.suraksha.app.presentation.theme.poppinsRegular
 
 @Composable
 fun HelplineCard(
