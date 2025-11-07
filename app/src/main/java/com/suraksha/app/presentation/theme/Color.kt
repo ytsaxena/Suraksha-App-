@@ -1,4 +1,4 @@
-package com.suraksha.app.ui.theme
+package com.suraksha.app.presentation.theme
 
 import androidx.compose.ui.graphics.Color
 

@@ -1,4 +1,4 @@
-package com.suraksha.app.ui.theme
+package com.suraksha.app.presentation.theme
 
 import com.suraksha.app.R
 import androidx.compose.material3.Typography
