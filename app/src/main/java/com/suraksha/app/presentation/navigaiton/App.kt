@@ -47,10 +47,19 @@ fun App(modifier: Modifier = Modifier) {
                     NavigationBarItem(
                         selected = selected,
                         onClick = {
+//                            navController.navigate(destination.route) {
+//                                popUpTo(0) { inclusive = true }
+//                                launchSingleTop = true
+//                            }
+
                             navController.navigate(destination.route) {
-                                popUpTo(0) { inclusive = true }
+                                popUpTo(navController.graph.startDestinationId) {
+                                    saveState = true
+                                }
                                 launchSingleTop = true
+                                restoreState = true
                             }
+
                         },
                         icon = {
                             Icon(
