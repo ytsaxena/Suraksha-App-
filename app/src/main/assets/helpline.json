@@ -1,0 +1,110 @@
+[
+  {
+    "name": "Women Helpline (All India)",
+    "number": "1091",
+    "email": "",
+    "website": "",
+    "isWhatsApp": false
+  },
+  {
+    "name": "Domestic Violence / Women Helpline",
+    "number": "181",
+    "email": "",
+    "website": "",
+    "isWhatsApp": false
+  },
+  {
+    "name": "NCW (National Commission for Women)",
+    "number": "7827170170",
+    "email": "complaintcell-ncw@nic.in",
+    "website": "https://ncw.nic.in",
+    "isWhatsApp": true
+  },
+  {
+    "name": "Cyber Crime Against Women",
+    "number": "",
+    "email": "",
+    "website": "https://cybercrime.gov.in",
+    "isWhatsApp": false
+  },
+  {
+    "name": "Childline (Child Helpline)",
+    "number": "1098",
+    "email": "",
+    "website": "https://childlineindia.org",
+    "isWhatsApp": false
+  },
+  {
+    "name": "Tourist Helpline (Ministry of Tourism)",
+    "number": "1363",
+    "email": "",
+    "website": "",
+    "isWhatsApp": false
+
+  },
+  {
+    "name": "NIMHANS Mental Health Helpline",
+    "number": "08046110007",
+    "email": "",
+    "website": "https://nimhans.ac.in",
+    "isWhatsApp": false
+  },
+  {
+    "name": "Tourist Helpline",
+    "number": "1363",
+    "email": "",
+    "website": "https://tourism.gov.in",
+    "isWhatsApp": false
+  },
+  {
+    "name": "Emergency Police (All India)",
+    "number": "112",
+    "email": "",
+    "website": "",
+    "isWhatsApp": false
+  },
+  {
+    "name": "UP Women Helpline (Women Power Line)",
+    "number": "1090",
+    "email": "",
+    "website": "https://uppolice.gov.in/article/en-about-us-mahila-samman-prakostha",
+    "isWhatsApp": false
+  },
+  {
+    "name": "UP Women Commission Helpline",
+    "number": "18001805220",
+    "email": "",
+    "website": "",
+    "isWhatsApp": false
+  },
+  {
+    "name": "Delhi Commission for Women (DCW)",
+    "number": "181",
+    "email": "",
+    "website": "https://dcw.delhi.gov.in",
+    "isWhatsApp": false
+  },
+  {
+    "name": "SPUWAC (Delhi Police Unit for Women & Children)",
+    "number": "7835075012",
+    "email": "",
+    "website": "",
+    "isWhatsApp": true
+  },
+  {
+    "name": "Women Protection Cell (Delhi Police)",
+    "number": "01124673366",
+    "email": "",
+    "website": "",
+    "isWhatsApp": false
+  },
+
+  {
+    "name": "Emergency Police",
+    "number": "112",
+    "email": "",
+    "website": "",
+    "isWhatsApp": false
+  }
+
+]

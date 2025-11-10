@@ -70,4 +70,5 @@ dependencies {
     implementation(libs.logging.interceptor)
     implementation(libs.compose.navigation)
     implementation(libs.hilt.navigation.compose)
+    implementation(libs.gson)
 }

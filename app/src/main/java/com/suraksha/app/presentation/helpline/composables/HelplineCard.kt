@@ -48,7 +48,8 @@ fun HelplineCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.weight(1f)
             ) {
                 Text(
                     text = title,
