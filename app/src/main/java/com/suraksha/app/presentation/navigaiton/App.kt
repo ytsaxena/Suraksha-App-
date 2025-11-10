@@ -1,5 +1,6 @@
 package com.suraksha.app.presentation.navigaiton
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -16,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.suraksha.app.presentation.theme.Purple40
 
@@ -23,38 +25,41 @@ import com.suraksha.app.presentation.theme.Purple40
 fun App(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
     val startDestination = Destination.MAP
-    var selectedDestination by rememberSaveable { mutableIntStateOf(startDestination.ordinal) }
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
 
-    Scaffold (
+    BackHandler(enabled = currentRoute != startDestination.route) {
+        navController.navigate(startDestination.route) {
+            popUpTo(0) { inclusive = true }
+            launchSingleTop = true
+        }
+    }
+
+    Scaffold(
         modifier = modifier,
         bottomBar = {
-            NavigationBar (
+            NavigationBar(
                 containerColor = Color.White,
                 windowInsets = NavigationBarDefaults.windowInsets
-            ){
+            ) {
                 Destination.entries.forEachIndexed { index, destination ->
-                    val selected = selectedDestination == index
+                    val selected = currentRoute == destination.route
                     NavigationBarItem(
                         selected = selected,
                         onClick = {
-                            selectedDestination = index
-                            navController.navigate(route = destination.route){
-                                popUpTo(0){
-                                    inclusive = true
-                                }
+                            navController.navigate(destination.route) {
+                                popUpTo(0) { inclusive = true }
                                 launchSingleTop = true
                             }
                         },
                         icon = {
                             Icon(
-                                painter = painterResource(destination.icon),
+                                painter = painterResource(id = destination.icon),
                                 contentDescription = destination.contentDescription
                             )
                         },
                         label = {
-                            Text(
-                                destination.contentDescription
-                            )
+                            Text(destination.contentDescription)
                         },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = Purple40,
@@ -67,7 +72,7 @@ fun App(modifier: Modifier = Modifier) {
                 }
             }
         }
-    ){ contentPadding ->
+    ) { contentPadding ->
         AppNavHost(
             navHostController = navController,
             startDestination = startDestination,
