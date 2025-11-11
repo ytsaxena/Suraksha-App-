@@ -6,4 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.ksp) apply false
     alias(libs.plugins.kotlinx.serialization) apply false
     alias(libs.plugins.dagger.hilt.android) apply false
+
+    alias(libs.plugins.google.services) apply false
+
 }

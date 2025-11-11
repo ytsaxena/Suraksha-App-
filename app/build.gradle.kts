@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.kotlin.ksp)
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.dagger.hilt.android)
+    alias(libs.plugins.google.services)
+
 }
 
 android {
@@ -71,4 +73,8 @@ dependencies {
     implementation(libs.compose.navigation)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.gson)
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+
 }
