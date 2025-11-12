@@ -1,5 +1,11 @@
 package com.suraksha.app.presentation.sos
 
+import android.Manifest
+import android.app.Activity
+import android.content.pm.PackageManager
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,10 +25,12 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -30,10 +38,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.suraksha.app.R
 import com.suraksha.app.presentation.sos.components.DescriptionCards
-import com.suraksha.app.presentation.theme.Purple40
-import com.suraksha.app.presentation.theme.Purple80
 import com.suraksha.app.presentation.theme.White
 import com.suraksha.app.presentation.theme.alertColor
 import com.suraksha.app.presentation.theme.buttonColorEnd
@@ -46,8 +56,32 @@ import com.suraksha.app.presentation.theme.whatsappColor
 
 @Composable
 fun SOSScreen(
-    OnSelectContactClicked: () -> Unit = {}
+    viewModel: SOSScreenVM = hiltViewModel(),
+    onSelectContactClicked: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            viewModel.fetchContacts()
+        } else {
+            Toast.makeText(context, "Permission required to show contacts", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // Check permission and request if needed
+    LaunchedEffect(Unit) {
+        when (PackageManager.PERMISSION_GRANTED) {
+            ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) -> {
+                viewModel.fetchContacts()
+            }
+            else -> {
+                permissionLauncher.launch(Manifest.permission.READ_CONTACTS)
+            }
+        }
+    }
+
     Column (
         modifier = Modifier
             .systemBarsPadding()
@@ -105,7 +139,7 @@ fun SOSScreen(
         )
         Button(
             modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 20.dp).fillMaxWidth(),
-            onClick = { OnSelectContactClicked() },
+            onClick = { onSelectContactClicked() },
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.Transparent
             ),
@@ -142,9 +176,15 @@ fun SOSScreen(
 @Preview
 @Composable
 private fun SOSScreenPrev() {
+    val navController = rememberNavController()
+
     Column(
-        modifier = Modifier.background(White)
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
     ) {
-        SOSScreen()
+        SOSScreen(
+            onSelectContactClicked = {}
+        )
     }
 }
