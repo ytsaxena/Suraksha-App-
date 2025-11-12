@@ -42,7 +42,8 @@ fun App(modifier: Modifier = Modifier) {
                 containerColor = Color.White,
                 windowInsets = NavigationBarDefaults.windowInsets
             ) {
-                Destination.entries.forEachIndexed { index, destination ->
+                Destination.entries
+                    .forEachIndexed { index, destination ->
                     val selected = currentRoute == destination.route
                     NavigationBarItem(
                         selected = selected,
@@ -63,7 +64,7 @@ fun App(modifier: Modifier = Modifier) {
                         },
                         icon = {
                             Icon(
-                                painter = painterResource(id = destination.icon),
+                                painter = painterResource(id = destination.icon!!),
                                 contentDescription = destination.contentDescription
                             )
                         },
