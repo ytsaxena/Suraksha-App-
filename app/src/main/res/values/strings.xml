@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">Suraksha.in</string>
+    <string name="add_emergency_contact">Add Emergency Contact</string>
+    <string name="add_emergency_contact_description">Set up your emergency contact to enable SOS features.</string>
+    <string name="instant_sms_alert">Instant SMS Alert</string>
+    <string name="instant_sms_alert_description">Send location &amp; emergency message</string>
+    <string name="auto_photo_capture">Auto Photo Capture</string>
+    <string name="auto_photo_capture_description">Front &amp; back camera photos</string>
+    <string name="whatsapp_integration">WhatsApp Integration</string>
+    <string name="whataspp_integration_description">Share photos &amp; live location</string>
+    <string name="select_contact">Select from Contact List</string>
+    <string name="select_emergency_contact">Select Emergency Contacts</string>
+    <string name="save_selected_contact">Save Selected Contacts(%1$d)</string>
 </resources>
