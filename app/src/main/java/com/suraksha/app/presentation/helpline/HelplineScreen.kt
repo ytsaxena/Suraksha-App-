@@ -1,24 +1,23 @@
 package com.suraksha.app.presentation.helpline
 
-import android.content.Context
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -26,8 +25,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.suraksha.app.presentation.theme.colorGrayBold
 import com.suraksha.app.presentation.theme.colorGrayLight
-import com.suraksha.app.presentation.theme.poppinsBold
-import com.suraksha.app.presentation.theme.poppinsRegular
 import com.suraksha.app.ui.theme.HelplineCard
 import com.suraksha.app.ui.theme.SafetyTipCard
 import com.suraksha.app.utility.copyToClipboard
@@ -52,8 +49,9 @@ fun HelplineScreen(modifier: Modifier = Modifier) {
     val helplines = remember { loadHelplines(context) }
 
         Scaffold(
-            contentWindowInsets = WindowInsets(0.dp),
-        ) { padding ->
+            contentWindowInsets = WindowInsets(left = 5.dp , right = 5.dp , bottom = 5.dp),
+        ) {
+            padding ->
             LazyColumn (
                 modifier = Modifier
                     .padding(padding)
@@ -61,31 +59,34 @@ fun HelplineScreen(modifier: Modifier = Modifier) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 contentPadding = PaddingValues(bottom = 80.dp)
             ) {
-                item {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 24.dp)) {
+
+                stickyHeader {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .background(Color.White)
+                            .fillMaxWidth()
+                            .padding(top = 50.dp, bottom = 20.dp , start = 12.dp, end = 12.dp)
+                    ) {
                         Text(
                             text = "Emergency Helplines",
                             fontWeight = FontWeight.Bold,
-                            fontFamily = poppinsBold,
-                            fontSize = 18.sp,
+                            fontSize = 16.sp,
                             color = colorGrayBold,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(top = 24.dp)
+                            textAlign = TextAlign.Center
                         )
                         Text(
                             text = "Verified government & NGO helpline numbers.",
                             fontSize = 16.sp,
                             color = colorGrayLight,
-                            fontFamily = poppinsRegular,
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(vertical = 12.dp)
+                            modifier = Modifier.padding(top = 8.dp)
                         )
                     }
                 }
 
-
                 items(helplines) { helpline ->
-                        HelplineCard(title = helpline.name, phone = helpline.number, onCallClick = {
+                        HelplineCard(title = helpline.name, phone = helpline.number, website = helpline.website, onCallClick = {
                             if (helpline.number.isNotEmpty()) {
                                 if (helpline.isWhatsApp) {
                                     openWhatsApp(context, helpline.number)
@@ -103,11 +104,8 @@ fun HelplineScreen(modifier: Modifier = Modifier) {
                     }
                 item {
                     Spacer(modifier = Modifier.height(20.dp))
-                    SafetyTipCard(
-                        """Always inform someone about your whereabouts when 
-            |traveling alone.""".trimMargin()
-                    )
-                    Spacer(modifier = Modifier.height(60.dp))
+                    SafetyTipCard("Always alert a trusted person whenever you travel alone.")
+                    Spacer(modifier = Modifier.height(40.dp))
                }
         }
     }
