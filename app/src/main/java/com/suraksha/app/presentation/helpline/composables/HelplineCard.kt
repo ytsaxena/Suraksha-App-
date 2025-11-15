@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Call
 import androidx.compose.material3.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
@@ -21,22 +22,23 @@ import androidx.compose.ui.unit.sp
 import com.suraksha.app.R
 import com.suraksha.app.presentation.theme.colorGrayBold
 import com.suraksha.app.presentation.theme.colorGrayLight
-import com.suraksha.app.presentation.theme.poppinsBold
-import com.suraksha.app.presentation.theme.poppinsRegular
+import com.suraksha.app.utility.loadHelplines
 
 @Composable
 fun HelplineCard(
     title: String,
     phone: String,
+    website: String,
     onCallClick: () -> Unit,
     onWebsiteClick: () -> Unit,
-    onCopyClick: () -> Unit
+    onCopyClick: () -> Unit,
+
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp, horizontal = 16.dp),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(25.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
@@ -54,16 +56,14 @@ fun HelplineCard(
                 Text(
                     text = title,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
+                    fontSize = 14.sp,
                     color = colorGrayBold,
-                    fontFamily = poppinsBold,
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
                     text = phone,
-                    fontSize = 16.sp,
+                    fontSize = 14.sp,
                     color = colorGrayLight,
-                    fontFamily = poppinsRegular,
                 )
             }
 
@@ -76,12 +76,16 @@ fun HelplineCard(
                     onClick = onCallClick
                 )
 
-                CircleIconButton(
-                    drawableRes = R.drawable.mage_globe_fill,
-                    contentDescription = "Website",
-                    backgroundColor = Color(0x333F51B5),
-                    onClick = onWebsiteClick
-                )
+
+                    CircleIconButton(
+                        drawableRes = R.drawable.mage_globe_fill,
+                        contentDescription = "Website",
+                        backgroundColor = Color(0x333F51B5),
+                        enabled = website.isNotEmpty(),
+                        onClick = onWebsiteClick
+                    )
+
+
 
 
                 CircleIconButton(
@@ -124,19 +128,23 @@ fun CircleIconButton(
     drawableRes: Int,
     contentDescription: String,
     backgroundColor: Color,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    enabled: Boolean = true,
 ) {
+
+    val alphaValue = if (enabled) 1f else 0.2f
+
     Box(
         modifier = Modifier
             .size(40.dp)
-            .background(backgroundColor, shape = CircleShape)
-            .clickable { onClick() },
+           .background(backgroundColor, shape = CircleShape)
+            .clickable(enabled = enabled) { onClick() },
         contentAlignment = Alignment.Center
     ) {
         Image(
             painter = painterResource(id = drawableRes),
             contentDescription = contentDescription,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(20.dp).alpha(alphaValue)
         )
     }
 }

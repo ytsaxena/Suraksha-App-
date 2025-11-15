@@ -5,6 +5,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -21,42 +22,40 @@ import com.suraksha.app.presentation.theme.safetyCardBackgroundColor
 
 @Composable
 fun SafetyTipCard(message: String) {
-    val shape = RoundedCornerShape(12.dp)
+    val shape = RoundedCornerShape(15.dp)
     Row(
-        modifier = Modifier
+        modifier = Modifier.padding(start = 15.dp, end = 15.dp)
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 2.dp)
-            .padding(bottom = 8.dp)
             .background(safetyCardBackgroundColor, shape),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(20.dp))
         Icon(
             imageVector = Icons.Default.Info,
             contentDescription = "Info",
             tint = White,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(25.dp)
         )
+
+        Spacer(modifier = Modifier.width(10.dp))
+
         Column(
-            modifier = Modifier
-                .padding(16.dp),
-            horizontalAlignment = Alignment.Start
+            modifier = Modifier.weight(1f).padding(vertical = 10.dp),
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.Center
         ){
-            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Safety Tip",
                 color = White,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
-                fontFamily = poppinsBold,
             )
-            Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = message,
                 color = White,
                 fontSize = 10.sp,
-                fontWeight = FontWeight.Medium,
-                fontFamily = poppinsRegular,
+                lineHeight = 13.sp,
+                fontWeight = FontWeight.Normal,
             )
         }
     }
