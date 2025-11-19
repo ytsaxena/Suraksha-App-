@@ -46,6 +46,7 @@ kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 logging-interceptor = {group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "httpLoggingVer"}
 compose-navigation = {group = "androidx.navigation", name = "navigation-compose", version.ref = "navVersion"}
 hilt-navigation-compose = {group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavVersion"}
+firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

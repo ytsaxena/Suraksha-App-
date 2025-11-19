@@ -7,13 +7,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.suraksha.app.presentation.sos.SOSScreen
-import com.suraksha.app.presentation.sos.SOSScreenVM
 import com.suraksha.app.presentation.sos.SelectContactScreen
+import com.suraksha.app.presentation.sos.SelectContactVM
 
 @Composable
 fun SOSNavGraph(
     modifier: Modifier = Modifier,
-    viewModel: SOSScreenVM = hiltViewModel()
+    viewModel: SelectContactVM = hiltViewModel()
 ) {
     val navController = rememberNavController()
 
@@ -24,7 +24,6 @@ fun SOSNavGraph(
     ) {
         composable("sos_main") {
             SOSScreen(
-                viewModel = viewModel,
                 onSelectContactClicked = {
                     navController.navigate("sos_select_contact")
                 }
@@ -33,10 +32,10 @@ fun SOSNavGraph(
 
         composable("sos_select_contact") {
             SelectContactScreen(
-                contacts = viewModel.contacts,
-                onSelectContactClicked = {
-                    navController.popBackStack()
-                },
+                viewModel = viewModel,
+//                onSaveSelectContactClicked = {
+//                    navController.popBackStack()
+//                },
                 onBackClicked = {
                     navController.popBackStack()
                 }

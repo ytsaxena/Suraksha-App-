@@ -56,32 +56,8 @@ import com.suraksha.app.presentation.theme.whatsappColor
 
 @Composable
 fun SOSScreen(
-    viewModel: SOSScreenVM = hiltViewModel(),
     onSelectContactClicked: () -> Unit = {}
 ) {
-    val context = LocalContext.current
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            viewModel.fetchContacts()
-        } else {
-            Toast.makeText(context, "Permission required to show contacts", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    // Check permission and request if needed
-    LaunchedEffect(Unit) {
-        when (PackageManager.PERMISSION_GRANTED) {
-            ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) -> {
-                viewModel.fetchContacts()
-            }
-            else -> {
-                permissionLauncher.launch(Manifest.permission.READ_CONTACTS)
-            }
-        }
-    }
-
     Column (
         modifier = Modifier
             .systemBarsPadding()
