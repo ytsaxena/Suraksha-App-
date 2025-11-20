@@ -1,6 +1,8 @@
 package com.suraksha.app.presentation.sos
 
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.suraksha.app.domain.SOSRepository
@@ -13,20 +15,31 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class SOSScreenVM @Inject constructor(
+class SelectContactVM @Inject constructor(
     private val sosRepository: SOSRepository
-) : ViewModel() {
+): ViewModel() {
     private val _contactsFlow = MutableStateFlow<List<Contact>>(emptyList())
     val contactsFlow = _contactsFlow.asStateFlow()
 
-    var contacts: List<Contact> = emptyList()
+    var selectedContacts by mutableStateOf(setOf<Contact>())
         private set
+
+    fun toggleSelection(contact: Contact, selected: Boolean) {
+        selectedContacts =
+            if (selected) selectedContacts + contact
+            else selectedContacts - contact
+    }
 
     fun fetchContacts() {
         viewModelScope.launch {
             val fetchedContacts = sosRepository.getContact()
             _contactsFlow.value = fetchedContacts
-            contacts = _contactsFlow.first()
+        }
+    }
+
+    fun onSaveSelectContactClicked(){
+        viewModelScope.launch {
+            sosRepository.saveContacts(selectedContacts.toList())
         }
     }
 }

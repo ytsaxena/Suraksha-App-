@@ -1,5 +1,11 @@
 package com.suraksha.app.presentation.sos
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -9,9 +15,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
@@ -22,10 +29,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -35,30 +39,36 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType.Companion.Text
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
+import androidx.compose.ui.window.Dialog
+import androidx.core.content.ContextCompat
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.suraksha.app.R
 import com.suraksha.app.domain.model.Contact
 import com.suraksha.app.presentation.sos.components.ContactCard
@@ -72,13 +82,123 @@ import com.suraksha.app.presentation.theme.grayColor
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SelectContactScreen(
+    viewModel: SelectContactVM = hiltViewModel(),
     modifier: Modifier = Modifier,
-    contacts: List<Contact>,
-    onSelectContactClicked: () -> Unit = {},
     onBackClicked: () -> Unit = {}
 ) {
-    var selectedContacts by remember { mutableStateOf(setOf<Int>()) }
+    val contacts by viewModel.contactsFlow.collectAsState()
+    val context = LocalContext.current
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            viewModel.fetchContacts()
+        } else {
+            Toast.makeText(context, "Permission required to show contacts", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // Check permission and request if needed
+    LaunchedEffect(Unit) {
+        when (PackageManager.PERMISSION_GRANTED) {
+            ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) -> {
+                viewModel.fetchContacts()
+            }
+            else -> {
+                permissionLauncher.launch(Manifest.permission.READ_CONTACTS)
+            }
+        }
+    }
     var searchQuery by remember { mutableStateOf("") }
+
+    var showDialog by remember { mutableStateOf<Boolean>(false) }
+
+    if (showDialog) {
+        Dialog(
+            onDismissRequest = { showDialog = false },
+        ) {
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(Color.White)
+                        .padding(24.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.save_emergency_contacts),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = colorGrayBold
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = "Save ${viewModel.selectedContacts.joinToString(", ") { it.name }} as your emergency contacts?",
+                        fontSize = 15.sp,
+                        color = colorGrayLight
+                    )
+                    Spacer(modifier = Modifier.height(28.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        OutlinedButton(
+                            onClick = { showDialog = false },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(
+                                1.dp, colorGrayBold
+                            )
+                        ) {
+                            Text("Cancel", color = colorGrayBold)
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(
+                                    brush = Brush.linearGradient(
+                                        colors = listOf(buttonColorStart, buttonColorEnd)
+                                    )
+                                )
+                                .clickable(onClick = { viewModel.onSaveSelectContactClicked() }),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Save",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+                Surface(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .offset(x = 10.dp, y = (-10).dp)
+                        .size(40.dp),
+                    shape = CircleShape,
+                    color = Color.White,
+                    shadowElevation = 8.dp
+                ) {
+                    IconButton(onClick = { showDialog = false }) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_close),
+                            contentDescription = "close",
+                            tint = colorGrayBold
+                        )
+                    }
+                }
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -119,11 +239,19 @@ fun SelectContactScreen(
             modifier = Modifier
                 .padding(padding)
                 .background(Color.White)
-                .padding(bottom = WindowInsets.navigationBars
-                    .asPaddingValues()
-                    .calculateBottomPadding() + 20.dp)
+                .padding(
+                    bottom = WindowInsets.navigationBars
+                        .asPaddingValues()
+                        .calculateBottomPadding() + 20.dp
+                )
         ) {
-            Divider(Modifier.fillMaxWidth().padding(bottom = 8.dp), color = grayColor, thickness = 0.4.dp)
+            Divider(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                color = grayColor,
+                thickness = 0.4.dp
+            )
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
@@ -158,24 +286,28 @@ fun SelectContactScreen(
                     unfocusedLeadingIconColor = grayColor
                 )
             )
-            Divider(Modifier.fillMaxWidth().padding(top = 8.dp), color = grayColor, thickness = 0.4.dp)
+            Divider(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                color = grayColor,
+                thickness = 0.4.dp
+            )
             LazyColumn(
                 modifier = Modifier
                     .weight(1f)
                     .padding(horizontal = 8.dp)
             ) {
                 items(contacts.size) { index ->
-                    val (name, phone) = contacts[index]
-                    val isSelected = index in selectedContacts
+                    val contact = contacts[index]
+                    val isSelected = contact in viewModel.selectedContacts
 
                     ContactCard(
-                        name = name,
-                        phoneNumber = phone,
+                        name = contact.name,
+                        phoneNumber = contact.phoneNumber,
                         isSelected = isSelected,
                         onSelectChange = { selected ->
-                            selectedContacts =
-                                if (selected) selectedContacts + index
-                                else selectedContacts - index
+                            viewModel.toggleSelection(contact, selected)
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -190,7 +322,7 @@ fun SelectContactScreen(
                         bottom = 8.dp
                     )
                     .fillMaxWidth(),
-                onClick = { onSelectContactClicked() },
+                onClick = { showDialog = true },
                 elevation = null,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.Transparent,
@@ -217,7 +349,7 @@ fun SelectContactScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Save Selected Contacts (${selectedContacts.size})",
+                        text = "Save Selected Contacts (${viewModel.selectedContacts.size})",
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
                         color = White,
@@ -232,17 +364,9 @@ fun SelectContactScreen(
 @Preview(showBackground = true)
 @Composable
 private fun SelectContactScreenPreview() {
-    val contacts = List(8) { index ->
-        Contact(
-            name = "Aditi Sharma",
-            phoneNumber = "+91 000000000$index"
-        )
-    }
 
     Box(modifier = Modifier.background(Color.White)) {
         SelectContactScreen(
-            contacts = contacts,
-            onSelectContactClicked = {}
         )
     }
 }
