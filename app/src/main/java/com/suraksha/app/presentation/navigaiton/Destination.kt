@@ -2,15 +2,12 @@ package com.suraksha.app.presentation.navigaiton
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.suraksha.app.R
 import com.suraksha.app.presentation.helpline.HelplineScreen
 import com.suraksha.app.presentation.map.MapScreen
-import com.suraksha.app.presentation.sos.SOSScreen
-import com.suraksha.app.presentation.sos.SelectContactScreen
 import com.suraksha.app.presentation.sos.navigation.SOSNavGraph
 
 enum class Destination (

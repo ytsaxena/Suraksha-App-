@@ -1,4 +1,4 @@
-package com.suraksha.app.presentation.sos
+package com.suraksha.app.presentation.sos.selectContact
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -70,7 +69,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.suraksha.app.R
-import com.suraksha.app.domain.model.Contact
 import com.suraksha.app.presentation.sos.components.ContactCard
 import com.suraksha.app.presentation.theme.White
 import com.suraksha.app.presentation.theme.buttonColorEnd
@@ -84,8 +82,16 @@ import com.suraksha.app.presentation.theme.grayColor
 fun SelectContactScreen(
     viewModel: SelectContactVM = hiltViewModel(),
     modifier: Modifier = Modifier,
+    navigateToSOSScreen: () -> Unit = {},
     onBackClicked: () -> Unit = {}
 ) {
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                SelectContactNavEvent.NavigateToSOSScreen -> navigateToSOSScreen()
+            }
+        }
+    }
     val contacts by viewModel.contactsFlow.collectAsState()
     val context = LocalContext.current
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -168,7 +174,10 @@ fun SelectContactScreen(
                                         colors = listOf(buttonColorStart, buttonColorEnd)
                                     )
                                 )
-                                .clickable(onClick = { viewModel.onSaveSelectContactClicked() }),
+                                .clickable(onClick = {
+                                    viewModel.onSaveSelectContactClicked()
+                                    showDialog = false
+                                }),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(

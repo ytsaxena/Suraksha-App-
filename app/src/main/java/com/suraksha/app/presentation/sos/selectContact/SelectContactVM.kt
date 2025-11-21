@@ -1,4 +1,4 @@
-package com.suraksha.app.presentation.sos
+package com.suraksha.app.presentation.sos.selectContact
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -8,9 +8,9 @@ import androidx.lifecycle.viewModelScope
 import com.suraksha.app.domain.SOSRepository
 import com.suraksha.app.domain.model.Contact
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -23,6 +23,9 @@ class SelectContactVM @Inject constructor(
 
     var selectedContacts by mutableStateOf(setOf<Contact>())
         private set
+
+    private val _events = MutableSharedFlow<SelectContactNavEvent>()
+    val events = _events
 
     fun toggleSelection(contact: Contact, selected: Boolean) {
         selectedContacts =
@@ -40,6 +43,7 @@ class SelectContactVM @Inject constructor(
     fun onSaveSelectContactClicked(){
         viewModelScope.launch {
             sosRepository.saveContacts(selectedContacts.toList())
+            _events.emit(SelectContactNavEvent.NavigateToSOSScreen)
         }
     }
 }

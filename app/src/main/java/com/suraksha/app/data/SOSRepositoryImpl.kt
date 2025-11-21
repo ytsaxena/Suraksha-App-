@@ -62,6 +62,27 @@ class SOSRepositoryImpl (
             .set(mapOf("contacts" to dtoList))
             .await()
     }
+
+    override suspend fun selectedContacts(): List<Contact> = withContext(Dispatchers.IO) {
+        val deviceId = Settings.Secure.getString(
+            context.contentResolver,
+            Settings.Secure.ANDROID_ID
+        )
+
+        val snapshot = firestore.collection("emergency_contacts")
+            .document(deviceId)
+            .get()
+            .await()
+
+        val dtoList = snapshot.get("contacts") as? List<Map<String, Any>> ?: emptyList()
+
+        return@withContext dtoList.map { map ->
+            Contact(
+                name = map["name"] as? String ?: "",
+                phoneNumber = map["phoneNumber"] as? String ?: ""
+            )
+        }
+    }
 }
 
 data class EmergencyContactDto(
