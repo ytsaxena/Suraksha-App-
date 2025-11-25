@@ -53,8 +53,10 @@ fun SOSNavGraph(
             )
         }
 
-        composable ("sos"){
-            SOSScreen()
+        composable("sos") {
+            SOSScreen(navigateToContactSelectScreen = {
+                navController.navigate("sos_select_contact")
+            })
         }
     }
 }

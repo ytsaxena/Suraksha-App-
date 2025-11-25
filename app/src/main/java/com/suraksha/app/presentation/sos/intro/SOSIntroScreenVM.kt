@@ -1,13 +1,11 @@
 package com.suraksha.app.presentation.sos.intro
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.suraksha.app.domain.SOSRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -16,7 +14,7 @@ class SOSIntroScreenVM @Inject constructor(
     private val sosRepository: SOSRepository
 ) : ViewModel() {
 
-    var isChecking by mutableStateOf(true)
+    var isChecking = MutableStateFlow(true)
         private set
 
     private val _events = MutableSharedFlow<SOSIntroNavEvent>()
@@ -35,7 +33,7 @@ class SOSIntroScreenVM @Inject constructor(
                 return@launch
             }
 
-            isChecking = false
+            isChecking.value = false
         }
     }
 }
