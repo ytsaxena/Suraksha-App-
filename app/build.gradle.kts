@@ -79,4 +79,7 @@ dependencies {
     implementation(libs.firebase.firestore)
 
     implementation(libs.neumorphic)
+    implementation(libs.maplibre.android.sdk)
+    implementation(libs.maplibre.compose)
+    implementation(libs.accompanist.permissions)
 }
