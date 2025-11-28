@@ -10,12 +10,12 @@ import com.suraksha.app.presentation.helpline.HelplineScreen
 import com.suraksha.app.presentation.map.MapScreen
 import com.suraksha.app.presentation.sos.navigation.SOSNavGraph
 
-enum class Destination (
+enum class Destination(
     val route: String,
     val label: String,
     val icon: Int,
     val contentDescription: String = ""
-){
+) {
     MAP("map", "Map", R.drawable.ic_map, "Map"),
     SOS("sos", "SOS", R.drawable.ic_sos, "SOS"),
     HELPLINE("helpline", "Helpline", R.drawable.ic_helpline, "Helpline")
@@ -28,16 +28,17 @@ fun AppNavHost(
     navHostController: NavHostController
 ) {
     NavHost(
-        navHostController,
+        modifier = modifier,
+        navController = navHostController,
         startDestination = startDestination.route
-    ){
-        Destination.entries.forEach { destination->
-            composable(destination.route){
-                when(destination){
+    ) {
+        Destination.entries.forEach { destination ->
+            composable(destination.route) {
+                when (destination) {
                     Destination.MAP -> MapScreen()
                     Destination.SOS -> SOSNavGraph(modifier)
                     Destination.HELPLINE -> HelplineScreen()
-                                    }
+                }
             }
         }
     }
