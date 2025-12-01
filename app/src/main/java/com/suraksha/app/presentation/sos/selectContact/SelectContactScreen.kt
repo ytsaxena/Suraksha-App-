@@ -248,11 +248,6 @@ fun SelectContactScreen(
             modifier = Modifier
                 .padding(padding)
                 .background(Color.White)
-                .padding(
-                    bottom = WindowInsets.navigationBars
-                        .asPaddingValues()
-                        .calculateBottomPadding() + 20.dp
-                )
         ) {
             Divider(
                 Modifier
