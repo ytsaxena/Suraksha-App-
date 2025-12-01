@@ -83,6 +83,7 @@ dependencies {
     implementation(libs.maplibre.compose)
     implementation(libs.maplibre.composeMaterial3)
     implementation(libs.accompanist.permissions)
+    implementation(libs.play.services.location)
 
     // https://mvnrepository.com/artifact/androidx.compose.material/material-icons-extended
     implementation("androidx.compose.material:material-icons-extended:1.7.8")

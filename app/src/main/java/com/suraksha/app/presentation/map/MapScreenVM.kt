@@ -37,6 +37,7 @@ class MapScreenVM @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val addr = mapRepository.fetchAddress(lat, lon)
             _address.value = addr ?: "Unable to fetch address"
+            Log.d("TAG", "fetchAddress: ${addr}")
         }
     }
 }
