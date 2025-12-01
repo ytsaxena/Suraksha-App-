@@ -1,5 +1,6 @@
 package com.suraksha.app.presentation.navigaiton
 
+import android.app.Activity
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
@@ -10,13 +11,13 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
+import androidx.core.view.WindowCompat
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.suraksha.app.presentation.theme.Purple40
@@ -34,7 +35,7 @@ fun App(modifier: Modifier = Modifier) {
             launchSingleTop = true
         }
     }
-
+    SetStatusBarDarkIcons()
     Scaffold(
         modifier = modifier,
         bottomBar = {
@@ -88,5 +89,16 @@ fun App(modifier: Modifier = Modifier) {
             startDestination = startDestination,
             modifier = Modifier.padding(contentPadding)
         )
+    }
+}
+
+@Composable
+fun SetStatusBarDarkIcons() {
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
+        }
     }
 }
