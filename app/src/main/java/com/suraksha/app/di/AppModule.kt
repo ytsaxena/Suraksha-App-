@@ -1,9 +1,14 @@
 package com.suraksha.app.di
 
+import android.app.Application
 import android.content.ContentResolver
 import android.content.Context
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.firebase.firestore.FirebaseFirestore
+import com.suraksha.app.data.MapRepositoryImpl
 import com.suraksha.app.data.SOSRepositoryImpl
+import com.suraksha.app.domain.MapRepository
 import com.suraksha.app.domain.SOSRepository
 import dagger.Module
 import dagger.Provides
@@ -43,4 +48,21 @@ object AppModule {
     @Singleton
     fun provideFirestore(): FirebaseFirestore =
         FirebaseFirestore.getInstance()
+
+    @Provides
+    @Singleton
+    fun provideFusedLocationProvider(
+        app: Application
+    ): FusedLocationProviderClient {
+        return LocationServices.getFusedLocationProviderClient(app)
+    }
+
+    @Provides
+    @Singleton
+    fun provideMapRepository(
+        app: Application,
+        client: FusedLocationProviderClient
+    ): MapRepository {
+        return MapRepositoryImpl(app, client)
+    }
 }
