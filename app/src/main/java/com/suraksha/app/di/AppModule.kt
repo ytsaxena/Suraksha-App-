@@ -61,8 +61,9 @@ object AppModule {
     @Singleton
     fun provideMapRepository(
         app: Application,
-        client: FusedLocationProviderClient
+        client: FusedLocationProviderClient,
+        firestore: FirebaseFirestore
     ): MapRepository {
-        return MapRepositoryImpl(app, client)
+        return MapRepositoryImpl(app, client, firestore)
     }
 }
