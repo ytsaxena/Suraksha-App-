@@ -1,6 +1,9 @@
 package com.suraksha.app.presentation.map
 
 import android.Manifest
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -22,6 +25,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
@@ -34,6 +39,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -74,6 +80,7 @@ import org.maplibre.spatialk.geojson.Position
 import kotlin.time.Duration.Companion.seconds
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.suraksha.app.domain.model.Rating
 import com.suraksha.app.presentation.theme.Purple40
 import com.suraksha.app.presentation.theme.White
 import com.suraksha.app.presentation.theme.buttonColorEnd
@@ -84,6 +91,7 @@ import com.suraksha.app.presentation.theme.negativeColor
 import com.suraksha.app.presentation.theme.positiveColor
 import com.suraksha.app.utility.BottomSheet
 import com.suraksha.app.utility.DialogBox
+import kotlinx.coroutines.delay
 import kotlin.io.path.Path
 
 private const val DEFAULT_ZOOM = 15.0
@@ -137,6 +145,24 @@ fun MapScreen(viewModel: MapScreenVM = hiltViewModel()) {
     var showPoliceBottomSheet by remember { mutableStateOf(false) }
     var showUnsafeAreaDialog by remember { mutableStateOf(false) }
 
+    val ratingSaved by viewModel.ratingSaved.collectAsState()
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (ratingSaved) {
+            RatingSavedToast(
+                message = "Thank you! Your response has been saved."
+            )
+        }
+    }
+
+    // Auto-hide after 2 seconds
+    LaunchedEffect(ratingSaved) {
+        if (ratingSaved) {
+            delay(2000)
+            viewModel.resetRatingSaved()
+        }
+    }
+
     if (showRateDialog){
         DialogBox(
             onDismiss = { showRateDialog = false },
@@ -148,7 +174,10 @@ fun MapScreen(viewModel: MapScreenVM = hiltViewModel()) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Button(
-                        onClick = {  },
+                        onClick = {
+                            viewModel.saveLocationRating(Rating.SAFE, address ?: "")
+                            showRateDialog = false
+                                  },
                         modifier = Modifier
                             .weight(1f)
                             .height(48.dp),
@@ -260,7 +289,7 @@ fun MapScreen(viewModel: MapScreenVM = hiltViewModel()) {
                 Button(
                     modifier = Modifier
                         .fillMaxWidth(),
-                    onClick = {  },
+                    onClick = { },
                     elevation = null,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Transparent,
@@ -281,7 +310,10 @@ fun MapScreen(viewModel: MapScreenVM = hiltViewModel()) {
                                     colors = listOf(buttonColorStart, buttonColorEnd)
                                 )
                             )
-                            .clickable(onClick = {  }),
+                            .clickable(onClick = {
+                                viewModel.saveLocationRating(Rating.UNSAFE, address ?: "")
+                                showUnsafeAreaDialog = false
+                            }),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -518,6 +550,35 @@ private fun MapOverlays(
                         y = screenPos.y - pinHeight
                     )
                     .size(pinWidth, pinHeight)
+            )
+        }
+    }
+}
+
+@Composable
+fun RatingSavedToast(
+    message: String,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(positiveColor)
+            .padding(16.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = null,
+                tint = Color.White
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = message,
+                color = Color.White,
+                fontSize = 16.sp
             )
         }
     }

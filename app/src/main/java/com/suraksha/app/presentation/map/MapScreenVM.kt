@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.suraksha.app.domain.MapRepository
 import com.suraksha.app.domain.model.AppLocation
+import com.suraksha.app.domain.model.Rating
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +25,8 @@ class MapScreenVM @Inject constructor(
     val location = _location
     private val _address = MutableStateFlow<String?>(null)
     val address = _address.asStateFlow()
+    private val _ratingSaved = MutableStateFlow(false)
+    val ratingSaved = _ratingSaved.asStateFlow()
 
     fun fetchCurrentLocation() {
         viewModelScope.launch {
@@ -39,5 +42,20 @@ class MapScreenVM @Inject constructor(
             _address.value = addr ?: "Unable to fetch address"
             Log.d("TAG", "fetchAddress: ${addr}")
         }
+    }
+
+    fun saveLocationRating(rating: Rating, address: String){
+        viewModelScope.launch {
+            try {
+                mapRepository.saveLocationRating(rating, address)
+                _ratingSaved.value = true
+            } catch (e: Exception) {
+                Log.e("MapScreenVM", "Error saving rating", e)
+            }
+        }
+    }
+
+    fun resetRatingSaved() {
+        _ratingSaved.value = false
     }
 }
