@@ -72,11 +72,8 @@ class MapRepositoryImpl(
         }
     }
 
-    override suspend fun saveLocationRating(rating: Rating, address: String) {
+    override suspend fun saveLocationRating(rating: Rating, pincode: String) {
         try {
-            val pincode = extractPincode(address)
-                ?: throw IllegalArgumentException("No valid pincode found in address: $address")
-
             Log.d("SaveRating", "Extracted pincode: $pincode")
 
             val firestore = FirebaseFirestore.getInstance()
@@ -111,10 +108,18 @@ class MapRepositoryImpl(
         }
     }
 
-    fun extractPincode(address: String): String? {
-        val regex = Regex("\\b\\d{6}\\b")
-        val matches = regex.findAll(address).toList()
+    override suspend fun getSafetyRating(pincode: String): Pair<Int, Int> {
+        return try {
+            val firestore = FirebaseFirestore.getInstance()
+            val doc = firestore.collection("pincode").document(pincode).get().await()
 
-        return matches.lastOrNull()?.value
+            val safe = doc.getLong("safe")?.toInt() ?: 0
+            val unsafe = doc.getLong("unsafe")?.toInt() ?: 0
+
+            Pair(safe, unsafe)
+        } catch (e: Exception) {
+            Log.e("SafetyRepo", "Error fetching safety rating", e)
+            Pair(0, 0)
+        }
     }
 }

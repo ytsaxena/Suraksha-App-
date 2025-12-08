@@ -108,6 +108,8 @@ fun MapScreen(viewModel: MapScreenVM = hiltViewModel()) {
     )
     val styleState = rememberStyleState()
     val address by viewModel.address.collectAsStateWithLifecycle()
+    val safePercent by viewModel.safePercent.collectAsState()
+    val unsafePercent by viewModel.unsafePercent.collectAsState()
 
     val permissionsState = rememberMultiplePermissionsState(
         permissions = listOf(
@@ -147,15 +149,6 @@ fun MapScreen(viewModel: MapScreenVM = hiltViewModel()) {
 
     val ratingSaved by viewModel.ratingSaved.collectAsState()
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        if (ratingSaved) {
-            RatingSavedToast(
-                message = "Thank you! Your response has been saved."
-            )
-        }
-    }
-
-    // Auto-hide after 2 seconds
     LaunchedEffect(ratingSaved) {
         if (ratingSaved) {
             delay(2000)
@@ -364,6 +357,17 @@ fun MapScreen(viewModel: MapScreenVM = hiltViewModel()) {
             onRateClicked = {showRateDialog = true},
             onPoliceClicked = {showPoliceBottomSheet = true}
         )
+        SafetyRatingCard(
+            safePercent = safePercent,
+            unsafePercent = unsafePercent,
+            onReloadClicked = { viewModel.reloadSafetyRating() },
+            modifier = Modifier
+        )
+        if (ratingSaved) {
+            RatingSavedToast(
+                message = "Thank you! Your response has been saved."
+            )
+        }
     }
 }
 
@@ -563,22 +567,104 @@ fun RatingSavedToast(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
+            .padding(top = 84.dp, bottom = 32.dp, end = 32.dp, start = 32.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(positiveColor)
-            .padding(16.dp)
+            .padding(24.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = null,
-                tint = Color.White
+                tint = Color.White,
+                modifier = Modifier.size(13.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = message,
                 color = Color.White,
-                fontSize = 16.sp
+                fontSize = 13.sp
+            )
+        }
+    }
+}
+
+@Composable
+fun SafetyRatingCard(
+    safePercent: Int?,
+    unsafePercent: Int?,
+    onReloadClicked: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .padding(12.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(Color.White)
+            .padding(16.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+
+            Column {
+                Text(
+                    text = "Safety Rating in this area",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colorGrayBold
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+
+                    if (safePercent != null) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_safe_rating),
+                                contentDescription = "Safe",
+                                tint = positiveColor,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "$safePercent% safe",
+                                fontSize = 12.sp,
+                                color = colorGrayLight
+                            )
+                        }
+                    }
+
+                    if (unsafePercent != null) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_unsafe_rating),
+                                contentDescription = "Unsafe",
+                                tint = negativeColor,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "$unsafePercent% unsafe",
+                                fontSize = 12.sp,
+                                color = colorGrayLight
+                            )
+                        }
+                    }
+                }
+            }
+            Icon(
+                painter = painterResource(id = R.drawable.ic_reload),
+                contentDescription = "Reload",
+                modifier = Modifier
+                    .size(22.dp)
+                    .clickable { onReloadClicked() }
             )
         }
     }
