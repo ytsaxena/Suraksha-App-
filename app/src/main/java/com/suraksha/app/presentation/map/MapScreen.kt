@@ -1,6 +1,9 @@
 package com.suraksha.app.presentation.map
 
 import android.Manifest
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -22,6 +25,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
@@ -34,6 +39,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -74,6 +80,7 @@ import org.maplibre.spatialk.geojson.Position
 import kotlin.time.Duration.Companion.seconds
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.suraksha.app.domain.model.Rating
 import com.suraksha.app.presentation.theme.Purple40
 import com.suraksha.app.presentation.theme.White
 import com.suraksha.app.presentation.theme.buttonColorEnd
@@ -84,6 +91,7 @@ import com.suraksha.app.presentation.theme.negativeColor
 import com.suraksha.app.presentation.theme.positiveColor
 import com.suraksha.app.utility.BottomSheet
 import com.suraksha.app.utility.DialogBox
+import kotlinx.coroutines.delay
 import kotlin.io.path.Path
 
 private const val DEFAULT_ZOOM = 15.0
@@ -100,6 +108,8 @@ fun MapScreen(viewModel: MapScreenVM = hiltViewModel()) {
     )
     val styleState = rememberStyleState()
     val address by viewModel.address.collectAsStateWithLifecycle()
+    val safePercent by viewModel.safePercent.collectAsState()
+    val unsafePercent by viewModel.unsafePercent.collectAsState()
 
     val permissionsState = rememberMultiplePermissionsState(
         permissions = listOf(
@@ -137,6 +147,15 @@ fun MapScreen(viewModel: MapScreenVM = hiltViewModel()) {
     var showPoliceBottomSheet by remember { mutableStateOf(false) }
     var showUnsafeAreaDialog by remember { mutableStateOf(false) }
 
+    val ratingSaved by viewModel.ratingSaved.collectAsState()
+
+    LaunchedEffect(ratingSaved) {
+        if (ratingSaved) {
+            delay(2000)
+            viewModel.resetRatingSaved()
+        }
+    }
+
     if (showRateDialog){
         DialogBox(
             onDismiss = { showRateDialog = false },
@@ -148,7 +167,10 @@ fun MapScreen(viewModel: MapScreenVM = hiltViewModel()) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Button(
-                        onClick = {  },
+                        onClick = {
+                            viewModel.saveLocationRating(Rating.SAFE, address ?: "")
+                            showRateDialog = false
+                                  },
                         modifier = Modifier
                             .weight(1f)
                             .height(48.dp),
@@ -260,7 +282,7 @@ fun MapScreen(viewModel: MapScreenVM = hiltViewModel()) {
                 Button(
                     modifier = Modifier
                         .fillMaxWidth(),
-                    onClick = {  },
+                    onClick = { },
                     elevation = null,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Transparent,
@@ -281,7 +303,10 @@ fun MapScreen(viewModel: MapScreenVM = hiltViewModel()) {
                                     colors = listOf(buttonColorStart, buttonColorEnd)
                                 )
                             )
-                            .clickable(onClick = {  }),
+                            .clickable(onClick = {
+                                viewModel.saveLocationRating(Rating.UNSAFE, address ?: "")
+                                showUnsafeAreaDialog = false
+                            }),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -332,6 +357,17 @@ fun MapScreen(viewModel: MapScreenVM = hiltViewModel()) {
             onRateClicked = {showRateDialog = true},
             onPoliceClicked = {showPoliceBottomSheet = true}
         )
+        SafetyRatingCard(
+            safePercent = safePercent,
+            unsafePercent = unsafePercent,
+            onReloadClicked = { viewModel.reloadSafetyRating() },
+            modifier = Modifier
+        )
+        if (ratingSaved) {
+            RatingSavedToast(
+                message = "Thank you! Your response has been saved."
+            )
+        }
     }
 }
 
@@ -518,6 +554,117 @@ private fun MapOverlays(
                         y = screenPos.y - pinHeight
                     )
                     .size(pinWidth, pinHeight)
+            )
+        }
+    }
+}
+
+@Composable
+fun RatingSavedToast(
+    message: String,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 84.dp, bottom = 32.dp, end = 32.dp, start = 32.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(positiveColor)
+            .padding(24.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(13.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = message,
+                color = Color.White,
+                fontSize = 13.sp
+            )
+        }
+    }
+}
+
+@Composable
+fun SafetyRatingCard(
+    safePercent: Int?,
+    unsafePercent: Int?,
+    onReloadClicked: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .padding(12.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(Color.White)
+            .padding(16.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+
+            Column {
+                Text(
+                    text = "Safety Rating in this area",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colorGrayBold
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+
+                    if (safePercent != null) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_safe_rating),
+                                contentDescription = "Safe",
+                                tint = positiveColor,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "$safePercent% safe",
+                                fontSize = 12.sp,
+                                color = colorGrayLight
+                            )
+                        }
+                    }
+
+                    if (unsafePercent != null) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_unsafe_rating),
+                                contentDescription = "Unsafe",
+                                tint = negativeColor,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "$unsafePercent% unsafe",
+                                fontSize = 12.sp,
+                                color = colorGrayLight
+                            )
+                        }
+                    }
+                }
+            }
+            Icon(
+                painter = painterResource(id = R.drawable.ic_reload),
+                contentDescription = "Reload",
+                modifier = Modifier
+                    .size(22.dp)
+                    .clickable { onReloadClicked() }
             )
         }
     }
