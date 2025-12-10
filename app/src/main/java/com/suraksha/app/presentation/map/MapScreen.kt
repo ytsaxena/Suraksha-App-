@@ -1,6 +1,9 @@
 package com.suraksha.app.presentation.map
 
 import android.Manifest
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -22,8 +25,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
@@ -32,7 +39,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -71,6 +80,8 @@ import org.maplibre.spatialk.geojson.Position
 import kotlin.time.Duration.Companion.seconds
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.suraksha.app.domain.model.Rating
+import com.suraksha.app.presentation.theme.Purple40
 import com.suraksha.app.presentation.theme.White
 import com.suraksha.app.presentation.theme.buttonColorEnd
 import com.suraksha.app.presentation.theme.buttonColorStart
@@ -78,6 +89,9 @@ import com.suraksha.app.presentation.theme.colorGrayBold
 import com.suraksha.app.presentation.theme.colorGrayLight
 import com.suraksha.app.presentation.theme.negativeColor
 import com.suraksha.app.presentation.theme.positiveColor
+import com.suraksha.app.utility.BottomSheet
+import com.suraksha.app.utility.DialogBox
+import kotlinx.coroutines.delay
 import kotlin.io.path.Path
 
 private const val DEFAULT_ZOOM = 15.0
@@ -94,6 +108,8 @@ fun MapScreen(viewModel: MapScreenVM = hiltViewModel()) {
     )
     val styleState = rememberStyleState()
     val address by viewModel.address.collectAsStateWithLifecycle()
+    val safePercent by viewModel.safePercent.collectAsState()
+    val unsafePercent by viewModel.unsafePercent.collectAsState()
 
     val permissionsState = rememberMultiplePermissionsState(
         permissions = listOf(
@@ -129,83 +145,189 @@ fun MapScreen(viewModel: MapScreenVM = hiltViewModel()) {
 
     var showRateDialog by remember { mutableStateOf(false) }
     var showPoliceBottomSheet by remember { mutableStateOf(false) }
+    var showUnsafeAreaDialog by remember { mutableStateOf(false) }
+
+    val ratingSaved by viewModel.ratingSaved.collectAsState()
+
+    LaunchedEffect(ratingSaved) {
+        if (ratingSaved) {
+            delay(2000)
+            viewModel.resetRatingSaved()
+        }
+    }
 
     if (showRateDialog){
-        Dialog(
-            onDismissRequest = { showRateDialog = false },
-        ) {
-            Box(
-                modifier = Modifier
-                    .padding(horizontal = 8.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(Color.White)
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+        DialogBox(
+            onDismiss = { showRateDialog = false },
+            title = stringResource(R.string.rate_this_area),
+            message = stringResource(R.string.is_this_area_safe_or_unsafe),
+            content = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        text = stringResource(R.string.rate_this_area),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = colorGrayBold
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = stringResource(R.string.is_this_area_safe_or_unsafe),
-                        fontSize = 15.sp,
-                        color = colorGrayLight
-                    )
-                    Spacer(modifier = Modifier.height(28.dp))
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Button(
+                        onClick = {
+                            viewModel.saveLocationRating(Rating.SAFE, address ?: "")
+                            showRateDialog = false
+                                  },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(containerColor = positiveColor)
+                    ) {
+                        Row (
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ){
+                            Icon(
+                                painter = painterResource(R.drawable.ic_rate),
+                                contentDescription = "rate",
+                                tint = Color.White,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(stringResource(R.string.safe), color = White)
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Button(
+                        onClick = {
+                            showUnsafeAreaDialog = true
+                            showRateDialog = false
+                                  },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(containerColor = negativeColor)
                     ) {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Button(
-                                onClick = {  },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(48.dp),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(containerColor = positiveColor)
-                            ) {
-                                Text(stringResource(R.string.safe), color = White)
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Button(
-                                onClick = {  },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(48.dp),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(containerColor = negativeColor)
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.unsafe),
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-                        TextButton(
-                            onClick = { showRateDialog = false },
-                            modifier = Modifier.padding(top = 16.dp).height(48.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.textButtonColors(
-                                containerColor = Color.Transparent,
-                                contentColor = colorGrayBold
+                            Icon(
+                                painter = painterResource(R.drawable.ic_dislike),
+                                contentDescription = "rate",
+                                tint = Color.White,
+                                modifier = Modifier.size(14.dp)
                             )
-                        ) {
                             Text(
                                 text = stringResource(R.string.unsafe),
-                                fontSize = 15.sp
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
                             )
                         }
+                    }
+                }
+            }
+        )
+    }
+
+    if (showPoliceBottomSheet){
+        BottomSheet(
+            modifier = Modifier,
+            title = stringResource(R.string.nearby_police_station),
+            onDismissRequest = { showPoliceBottomSheet = false },
+            content = {}
+        )
+    }
+
+    if (showUnsafeAreaDialog){
+        DialogBox(
+            onDismiss = { showUnsafeAreaDialog = false },
+            title = stringResource(R.string.tell_us_what_happened)
+        ) {
+
+            val options = listOf(
+                stringResource(R.string.was_it_too_dark),
+                stringResource(R.string.was_anyone_following_you),
+                stringResource(R.string.were_there_no_police_nearby),
+                stringResource(R.string.did_you_face_harassment),
+                stringResource(R.string.poor_lighting_conditions)
+            )
+
+            val selected = remember { mutableStateListOf(false, false, false, false, false) }
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                options.forEachIndexed { index, text ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Checkbox(
+                            checked = selected[index],
+                            onCheckedChange = { selected[index] = it },
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = Purple40,
+                                uncheckedColor = colorGrayLight
+                            )
+                        )
+                        Text(
+                            text = text,
+                            color = colorGrayLight,
+                            fontSize = 15.sp
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(28.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Button(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    onClick = { },
+                    elevation = null,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = Color.Transparent,
+                        disabledContainerColor = Color.Transparent,
+                        disabledContentColor = Color.Transparent
+                    ),
+                    contentPadding = PaddingValues(0.dp),
+                    shape = RoundedCornerShape(4.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                brush = Brush.linearGradient(
+                                    colors = listOf(buttonColorStart, buttonColorEnd)
+                                )
+                            )
+                            .clickable(onClick = {
+                                viewModel.saveLocationRating(Rating.UNSAFE, address ?: "")
+                                showUnsafeAreaDialog = false
+                            }),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stringResource(R.string.submit_report),
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    OutlinedButton(
+                        onClick = { showUnsafeAreaDialog = false},
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = colorGrayBold
+                        ),
+                        border = BorderStroke(1.dp, colorGrayBold),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(stringResource(R.string.cancel))
                     }
                 }
             }
@@ -235,6 +357,17 @@ fun MapScreen(viewModel: MapScreenVM = hiltViewModel()) {
             onRateClicked = {showRateDialog = true},
             onPoliceClicked = {showPoliceBottomSheet = true}
         )
+        SafetyRatingCard(
+            safePercent = safePercent,
+            unsafePercent = unsafePercent,
+            onReloadClicked = { viewModel.reloadSafetyRating() },
+            modifier = Modifier
+        )
+        if (ratingSaved) {
+            RatingSavedToast(
+                message = "Thank you! Your response has been saved."
+            )
+        }
     }
 }
 
@@ -245,7 +378,7 @@ fun BoxScope.BottomButtons(
 ) {
     Row(
         modifier = Modifier
-            .align (Alignment.BottomCenter)
+            .align(Alignment.BottomCenter)
             .padding(16.dp)
             .padding(12.dp),
         horizontalArrangement = Arrangement.Center
@@ -421,6 +554,117 @@ private fun MapOverlays(
                         y = screenPos.y - pinHeight
                     )
                     .size(pinWidth, pinHeight)
+            )
+        }
+    }
+}
+
+@Composable
+fun RatingSavedToast(
+    message: String,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 84.dp, bottom = 32.dp, end = 32.dp, start = 32.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(positiveColor)
+            .padding(24.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(13.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = message,
+                color = Color.White,
+                fontSize = 13.sp
+            )
+        }
+    }
+}
+
+@Composable
+fun SafetyRatingCard(
+    safePercent: Int?,
+    unsafePercent: Int?,
+    onReloadClicked: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .padding(12.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(Color.White)
+            .padding(16.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+
+            Column {
+                Text(
+                    text = "Safety Rating in this area",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colorGrayBold
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+
+                    if (safePercent != null) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_safe_rating),
+                                contentDescription = "Safe",
+                                tint = positiveColor,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "$safePercent% safe",
+                                fontSize = 12.sp,
+                                color = colorGrayLight
+                            )
+                        }
+                    }
+
+                    if (unsafePercent != null) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_unsafe_rating),
+                                contentDescription = "Unsafe",
+                                tint = negativeColor,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "$unsafePercent% unsafe",
+                                fontSize = 12.sp,
+                                color = colorGrayLight
+                            )
+                        }
+                    }
+                }
+            }
+            Icon(
+                painter = painterResource(id = R.drawable.ic_reload),
+                contentDescription = "Reload",
+                modifier = Modifier
+                    .size(22.dp)
+                    .clickable { onReloadClicked() }
             )
         }
     }
