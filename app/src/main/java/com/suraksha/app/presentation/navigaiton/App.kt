@@ -2,6 +2,7 @@ package com.suraksha.app.presentation.navigaiton
 
 import android.app.Activity
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -37,7 +38,7 @@ fun App(modifier: Modifier = Modifier) {
     }
     SetStatusBarDarkIcons()
     Scaffold(
-        modifier = modifier,
+        modifier = modifier.fillMaxSize(),
         bottomBar = {
             NavigationBar(
                 containerColor = Color.White,

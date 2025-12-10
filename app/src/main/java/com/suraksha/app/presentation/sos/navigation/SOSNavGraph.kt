@@ -6,6 +6,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import com.suraksha.app.domain.model.Contact
 import com.suraksha.app.presentation.sos.intro.SOSIntroScreen
 import com.suraksha.app.presentation.sos.intro.SOSIntroScreenVM
 import com.suraksha.app.presentation.sos.selectContact.SelectContactScreen
@@ -16,7 +19,7 @@ import com.suraksha.app.presentation.sos.sos.SOSScreen
 fun SOSNavGraph(
     modifier: Modifier = Modifier,
     viewModel1: SelectContactVM = hiltViewModel(),
-    viewModel2: SOSIntroScreenVM = hiltViewModel()
+    viewModel2: SOSIntroScreenVM = hiltViewModel(),
 ) {
     val navController = rememberNavController()
 
@@ -27,35 +30,47 @@ fun SOSNavGraph(
     ) {
         composable("sos_intro") {
             SOSIntroScreen(
+                modifier = modifier,
                 viewModel = viewModel2,
-                navigateToSOSScreen = {
-                    navController.navigate("sos"){
+                navigateToSOSScreen = { contactList ->
+                    val contactListStr = Gson().toJson(contactList)
+                    navController.navigate("sos/$contactListStr") {
                         popUpTo(0) { inclusive = true }
                     }
                 },
                 onSelectContactClicked = {
-                    navController.navigate("sos_select_contact")
+                    val contactListStr = Gson().toJson(emptyList<Contact>())
+                    navController.navigate("sos_select_contact/${contactListStr}")
                 }
             )
         }
 
-        composable("sos_select_contact") {
+        composable("sos_select_contact/{contactList}") { backStackEntry ->
+            val contactListStr = backStackEntry.arguments?.getString("contactList")
+            val token = object : TypeToken<List<Contact>>() {}.type
+            val contactList: List<Contact>? = Gson().fromJson(contactListStr, token)
             SelectContactScreen(
                 viewModel = viewModel1,
                 onBackClicked = {
                     navController.popBackStack()
                 },
-                navigateToSOSScreen = {
-                    navController.navigate("sos"){
+                navigateToSOSScreen = { contactList ->
+                    val contactListStr = Gson().toJson(contactList)
+                    navController.navigate("sos/$contactListStr") {
                         popUpTo(0) { inclusive = true }
                     }
-                }
+                },
+                selectedContacts = contactList?.toSet() ?: emptySet()
             )
         }
 
-        composable("sos") {
-            SOSScreen(navigateToContactSelectScreen = {
-                navController.navigate("sos_select_contact")
+        composable("sos/{contactList}") { backStackEntry ->
+            val contactListStr = backStackEntry.arguments?.getString("contactList")
+            val token = object : TypeToken<List<Contact>>() {}.type
+            val contactList: List<Contact> = Gson().fromJson(contactListStr, token)
+            SOSScreen(contactList = contactList, navigateToContactSelectScreen = { contactList ->
+                val contactListStr = Gson().toJson(contactList)
+                navController.navigate("sos_select_contact/$contactListStr")
             })
         }
     }

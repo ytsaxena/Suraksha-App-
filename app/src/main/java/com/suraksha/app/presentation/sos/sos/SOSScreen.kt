@@ -1,9 +1,12 @@
 package com.suraksha.app.presentation.sos.sos
 
-import android.graphics.BlurMaskFilter
-import androidx.compose.foundation.Canvas
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -34,6 +37,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,25 +47,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.gandiva.neumorphic.LightSource
 import com.gandiva.neumorphic.NeuAttrs
 import com.gandiva.neumorphic.neu
 import com.gandiva.neumorphic.shape.Pressed
 import com.gandiva.neumorphic.shape.RoundedCorner
+import com.suraksha.app.MainActivity
 import com.suraksha.app.R
+import com.suraksha.app.domain.model.Contact
 import com.suraksha.app.presentation.theme.White
 import com.suraksha.app.presentation.theme.backgroundColor
 import com.suraksha.app.presentation.theme.colorGrayBold
@@ -81,26 +86,73 @@ import com.suraksha.app.presentation.theme.whatsappColor37
 import com.suraksha.app.presentation.theme.whatsappColor5
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-
-data class Contact(val name: String, val phoneNumber: String)
-
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SOSScreen(
     modifier: Modifier = Modifier,
     viewModel: SosViewModel = hiltViewModel(),
-    navigateToContactSelectScreen: () -> Unit,
+    navigateToContactSelectScreen: (List<Contact>) -> Unit,
+    contactList: List<Contact> = emptyList(),
 ) {
 
+    val context = LocalContext.current
+    val multiplePermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+
+    }
+    LaunchedEffect(contactList) {
+        viewModel.loadContacts(contactList)
+    }
+
+    // Check permission and request if needed
+    LaunchedEffect(Unit) {
+        val permissionsList = mutableListOf<String>()
+
+        if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            permissionsList.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        if (
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.SEND_SMS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            permissionsList.add(Manifest.permission.SEND_SMS)
+        }
+
+        if (permissionsList.isNotEmpty()) {
+            multiplePermissionLauncher.launch(permissionsList.toTypedArray())
+        }
+    }
+
+
     val scrollState = rememberScrollState()
-    val sharingLocationStatus by viewModel.sharingLocationStatus.collectAsState()
-    val contactsList = listOf(
-        Contact(name = "Surendhar", phoneNumber = "8608823187"),
-        Contact(name = "Surendhar", phoneNumber = "8608823187"),
-        Contact(name = "Surendhar", phoneNumber = "8608823187"),
-    )
+    val smsState by viewModel.smsState.collectAsState()
+    if (smsState is SmsState.Success) {
+        Toast.makeText(context, "Location Shared via SMS Success", Toast.LENGTH_SHORT).show()
+    } else if (smsState is SmsState.Error) {
+        Toast.makeText(
+            context,
+            "Location Shared via SMS Failure ${(smsState as SmsState.Error).message}",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+
     Surface(modifier = Modifier.background(backgroundColor)) {
+        var alarmSoundCheck by remember { mutableStateOf(true) }
+
         Column(
             modifier = modifier
                 .verticalScroll(scrollState)
@@ -126,15 +178,25 @@ fun SOSScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 32.dp, vertical = 6.dp),
             )
-            SoSButton1(afterSosPressedDelay = viewModel::shareLiveLocation)
-            if (sharingLocationStatus) {
+            SoSButton1(afterSosPressedDelay = {
+                val currentTime = System.currentTimeMillis()
+                val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault())
+                val formattedTime = dateFormat.format(Date(currentTime))
+                viewModel.shareLiveLocation(
+                    formattedTime
+                )
+            }, onSosPressed = {
+                if (alarmSoundCheck) {
+                    val activity = context as MainActivity
+                    println("Launching Foreground Service")
+                    activity.startMyService()
+                }
+            })
+            if (smsState == SmsState.Loading) {
                 Card(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    colors = CardDefaults.cardColors().copy(
+                    modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors().copy(
                         containerColor = whatsappColor5
-                    ),
-                    shape = RoundedCornerShape(10.dp)
+                    ), shape = RoundedCornerShape(10.dp)
                 ) {
                     Row(
                         modifier = Modifier
@@ -170,7 +232,6 @@ fun SOSScreen(
                     disabledContentColor = Color.Gray
                 ), shape = RoundedCornerShape(20.dp)
             ) {
-                var alarmSoundCheck by remember { mutableStateOf(true) }
 
                 Row(
                     modifier = Modifier.padding(vertical = 12.dp, horizontal = 24.dp),
@@ -277,7 +338,9 @@ fun SOSScreen(
                     fontFamily = poppinsBold,
                 )
                 Spacer(modifier = Modifier.weight(1f))
-                IconButton(modifier = Modifier, onClick = navigateToContactSelectScreen) {
+                IconButton(modifier = Modifier, onClick = {
+                    navigateToContactSelectScreen(contactList)
+                }) {
                     Icon(
                         painter = painterResource(R.drawable.ic_pencil),
                         contentDescription = "Alarm Sound Icon",
@@ -288,7 +351,7 @@ fun SOSScreen(
             Column(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                contactsList.forEach { contact ->
+                contactList.forEach { contact ->
                     ContactItem(contact)
                 }
             }
@@ -362,8 +425,7 @@ fun ContactItem(contact: Contact) {
 }
 
 @Composable
-fun SoSButton1(afterSosPressedDelay: () -> Unit) {
-
+fun SoSButton1(afterSosPressedDelay: () -> Unit, onSosPressed: () -> Unit) {
     Box(
         modifier = Modifier
             .padding(vertical = 20.dp)
@@ -400,6 +462,7 @@ fun SoSButton1(afterSosPressedDelay: () -> Unit) {
                     .fillMaxSize()
                     .clickable {
                         coroutineScope.launch {
+                            onSosPressed()
                             for (sec in 3 downTo 1) {
                                 countDownTimer = sec
                                 println(countDownTimer)
@@ -426,5 +489,19 @@ fun SoSButton1(afterSosPressedDelay: () -> Unit) {
                 )
             }
         }
+    }
+}
+
+
+@Preview
+@Composable
+fun PreviewSoSButton() {
+    Box(
+        modifier = Modifier
+            .size(300.dp)
+            .background(Color.White),
+        contentAlignment = Alignment.Center
+    ) {
+        SoSButton1({}, {})
     }
 }

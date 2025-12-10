@@ -4,9 +4,7 @@ import android.content.ContentResolver
 import android.content.Context
 import android.provider.ContactsContract
 import android.provider.Settings
-import android.util.Log
-import com.google.firebase.Firebase
-import com.google.firebase.FirebaseApp
+import android.telephony.SmsManager
 import com.google.firebase.firestore.FirebaseFirestore
 import com.suraksha.app.domain.SOSRepository
 import com.suraksha.app.domain.model.Contact
@@ -17,20 +15,18 @@ import kotlinx.coroutines.withContext
 import java.util.UUID
 import javax.inject.Inject
 
-class SOSRepositoryImpl (
+class SOSRepositoryImpl @Inject constructor(
     private val contentResolver: ContentResolver,
-    private val context: Context,
-    private val firestore: FirebaseFirestore
-): SOSRepository {
-    override suspend fun getContact(): List<Contact> = withContext(Dispatchers.IO){
+    @ApplicationContext private val context: Context,
+    private val firestore: FirebaseFirestore,
+) : SOSRepository {
+    override suspend fun getContact(): List<Contact> = withContext(Dispatchers.IO) {
         val contactList = mutableListOf<Contact>()
         val cursor = contentResolver.query(
-            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-            arrayOf(
+            ContactsContract.CommonDataKinds.Phone.CONTENT_URI, arrayOf(
                 ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
                 ContactsContract.CommonDataKinds.Phone.NUMBER
-            ),
-            null, null, null
+            ), null, null, null
         )
         cursor?.use {
             val nameIndex = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
@@ -83,10 +79,28 @@ class SOSRepositoryImpl (
             )
         }
     }
+
+    override suspend fun sendSms(phoneNumber: String, message: String): Result<Unit> {
+        return try {
+            val smsManager = context.getSystemService(SmsManager::class.java)
+
+            val parts = smsManager.divideMessage(message)
+
+            smsManager.sendMultipartTextMessage(
+                phoneNumber, null, parts, null, null
+            )
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Result.failure(e)
+        }
+    }
+
 }
 
 data class EmergencyContactDto(
     val id: String,
     val name: String,
-    val phoneNumber: String
+    val phoneNumber: String,
 )

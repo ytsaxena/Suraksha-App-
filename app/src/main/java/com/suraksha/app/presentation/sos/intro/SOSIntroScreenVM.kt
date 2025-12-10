@@ -29,7 +29,7 @@ class SOSIntroScreenVM @Inject constructor(
             val contacts = sosRepository.selectedContacts()
 
             if (contacts.isNotEmpty()) {
-                _events.emit(SOSIntroNavEvent.NavigateToSOSScreen)
+                _events.emit(SOSIntroNavEvent.NavigateToSOSScreen(contacts))
                 return@launch
             }
 
