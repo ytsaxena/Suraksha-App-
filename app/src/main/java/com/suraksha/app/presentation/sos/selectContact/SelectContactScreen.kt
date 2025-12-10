@@ -14,12 +14,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -28,11 +27,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -40,11 +38,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -69,6 +65,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.suraksha.app.R
+import com.suraksha.app.domain.model.Contact
 import com.suraksha.app.presentation.sos.components.ContactCard
 import com.suraksha.app.presentation.theme.White
 import com.suraksha.app.presentation.theme.buttonColorEnd
@@ -82,17 +79,23 @@ import com.suraksha.app.presentation.theme.grayColor
 fun SelectContactScreen(
     viewModel: SelectContactVM = hiltViewModel(),
     modifier: Modifier = Modifier,
-    navigateToSOSScreen: () -> Unit = {},
-    onBackClicked: () -> Unit = {}
+    navigateToSOSScreen: (contactList: List<Contact>) -> Unit = {},
+    onBackClicked: () -> Unit = {},
+    selectedContacts : Set<Contact> = emptySet(),
 ) {
     LaunchedEffect(Unit) {
+        if(selectedContacts.isNotEmpty()) {
+            viewModel.loadSelectedContact(selectedContacts)
+        }
         viewModel.events.collect { event ->
             when (event) {
-                SelectContactNavEvent.NavigateToSOSScreen -> navigateToSOSScreen()
+                is SelectContactNavEvent.NavigateToSOSScreen -> navigateToSOSScreen(event.contactList)
             }
         }
     }
     val contacts by viewModel.contactsFlow.collectAsState()
+    val allContacts = contacts
+    var contactsBasedOnQuery = contacts
     val context = LocalContext.current
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -209,46 +212,18 @@ fun SelectContactScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = stringResource(R.string.select_emergency_contact),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                            color = colorGrayBold
-                        )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = { onBackClicked() }) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back",
-                            modifier = Modifier.size(16.dp),
-                            tint = colorGrayLight
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White,
-                    titleContentColor = Color.Black
-                )
-            )
-        },
-        bottomBar = {
-        }
-    ) { padding ->
+    Surface(
+        modifier = modifier.fillMaxSize(),
+    ) {
         Column(
             modifier = Modifier
-                .padding(padding)
+                .fillMaxSize()
                 .background(Color.White)
         ) {
+            CustomCenterTopBar(
+                title = stringResource(R.string.select_emergency_contact),
+                onBackClicked = onBackClicked,
+            )
             Divider(
                 Modifier
                     .fillMaxWidth()
@@ -258,7 +233,16 @@ fun SelectContactScreen(
             )
             OutlinedTextField(
                 value = searchQuery,
-                onValueChange = { searchQuery = it },
+                onValueChange = {
+                    if(it.length <= 20) {
+                        searchQuery = it
+                        if (searchQuery.isEmpty()) {
+                            contactsBasedOnQuery = allContacts
+                        } else {
+                            contactsBasedOnQuery = filterContacts(searchQuery, allContacts)
+                        }
+                    }
+                },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Search,
@@ -273,6 +257,7 @@ fun SelectContactScreen(
                         color = grayColor
                     )
                 },
+                singleLine = true,
                 textStyle = LocalTextStyle.current.copy(
                     fontSize = 13.sp
                 ),
@@ -302,8 +287,8 @@ fun SelectContactScreen(
                     .weight(1f)
                     .padding(horizontal = 8.dp)
             ) {
-                items(contacts.size) { index ->
-                    val contact = contacts[index]
+                items(contactsBasedOnQuery.size) { index ->
+                    val contact = contactsBasedOnQuery[index]
                     val isSelected = contact in viewModel.selectedContacts
 
                     ContactCard(
@@ -361,6 +346,59 @@ fun SelectContactScreen(
                     )
                 }
             }
+        }
+    }
+}
+
+private fun filterContacts(
+    searchQuery: String,
+    allContacts: List<Contact>,
+): List<Contact> {
+    val filteredContacts =
+        allContacts.filter { it.name.contains(searchQuery , ignoreCase = true) || it.phoneNumber.contains(searchQuery, ignoreCase = true) }
+    return filteredContacts
+}
+
+@Composable
+fun CustomCenterTopBar(
+    title: String,
+    onBackClicked: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .background(Color.White)
+    ) {
+        // Back Button
+        Row(
+            modifier = Modifier
+                .fillMaxHeight()
+                .padding(start = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBackClicked) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = colorGrayLight,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = title,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = colorGrayBold
+            )
         }
     }
 }

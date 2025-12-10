@@ -1,6 +1,7 @@
 package com.suraksha.app.presentation.sos.intro
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
 import com.suraksha.app.R
+import com.suraksha.app.domain.model.Contact
 import com.suraksha.app.presentation.sos.components.DescriptionCards
 import com.suraksha.app.presentation.theme.White
 import com.suraksha.app.presentation.theme.alertColor
@@ -51,13 +52,14 @@ import com.suraksha.app.presentation.theme.whatsappColor
 @Composable
 fun SOSIntroScreen(
     viewModel: SOSIntroScreenVM = hiltViewModel(),
-    navigateToSOSScreen: () -> Unit = {},
-    onSelectContactClicked: () -> Unit = {}
+    navigateToSOSScreen: (List<Contact>) -> Unit = {},
+    onSelectContactClicked: () -> Unit = {},
+    modifier: Modifier= Modifier,
 ) {
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
-                SOSIntroNavEvent.NavigateToSOSScreen -> navigateToSOSScreen()
+                is SOSIntroNavEvent.NavigateToSOSScreen -> navigateToSOSScreen(event.contactList)
             }
         }
     }
@@ -66,7 +68,7 @@ fun SOSIntroScreen(
 
     if (isChecking) {
         Box(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
@@ -75,11 +77,21 @@ fun SOSIntroScreen(
         return
     }
 
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .border(1.dp,Color.DarkGray),
+        contentAlignment = Alignment.Center
+    ) {
+//        CircularProgressIndicator()
+    }
+
     Column (
         modifier = Modifier
-            .systemBarsPadding()
+//            .systemBarsPadding()
+            .fillMaxSize()
             .padding(top = 32.dp, start = 16.dp, end = 16.dp)
-            .fillMaxSize(),
+            .border(1.dp,Color.Blue),
         verticalArrangement = Arrangement.spacedBy(4.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ){
@@ -131,7 +143,9 @@ fun SOSIntroScreen(
             tint = whatsappColor
         )
         Button(
-            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 20.dp).fillMaxWidth(),
+            modifier = Modifier
+                .padding(start = 16.dp, end = 16.dp, top = 20.dp)
+                .fillMaxWidth(),
             onClick = { onSelectContactClicked() },
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.Transparent
@@ -153,7 +167,7 @@ fun SOSIntroScreen(
                     .fillMaxWidth()
                     .padding(vertical = 12.dp),
                 contentAlignment = Alignment.Center
-            ){
+            ) {
                 Text(
                     text = stringResource(R.string.select_contact),
                     fontWeight = FontWeight.Bold,
@@ -176,8 +190,6 @@ private fun SOSScreenPrev() {
             .fillMaxSize()
             .background(Color.White)
     ) {
-        SOSIntroScreen(
-            onSelectContactClicked = {}
-        )
+        SOSIntroScreen()
     }
 }

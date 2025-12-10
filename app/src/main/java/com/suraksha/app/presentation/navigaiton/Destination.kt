@@ -36,7 +36,7 @@ fun AppNavHost(
             composable(destination.route) {
                 when (destination) {
                     Destination.MAP -> MapScreen()
-                    Destination.SOS -> SOSNavGraph(modifier)
+                    Destination.SOS -> SOSNavGraph()
                     Destination.HELPLINE -> HelplineScreen()
                 }
             }

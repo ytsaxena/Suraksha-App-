@@ -36,14 +36,18 @@ class SelectContactVM @Inject constructor(
     fun fetchContacts() {
         viewModelScope.launch {
             val fetchedContacts = sosRepository.getContact()
-            _contactsFlow.value = fetchedContacts
+            _contactsFlow.value = fetchedContacts.sortedBy { it.name }.distinct()
         }
+    }
+
+    fun loadSelectedContact(contact: Set<Contact>){
+        selectedContacts = contact.sortedBy { it.name }.distinct().toSet()
     }
 
     fun onSaveSelectContactClicked(){
         viewModelScope.launch {
             sosRepository.saveContacts(selectedContacts.toList())
-            _events.emit(SelectContactNavEvent.NavigateToSOSScreen)
+            _events.emit(SelectContactNavEvent.NavigateToSOSScreen(selectedContacts.toList()))
         }
     }
 }
