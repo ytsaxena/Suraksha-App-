@@ -1,9 +1,11 @@
 package com.suraksha.app.presentation.map
 
 import android.Manifest
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import android.os.Handler
+import android.os.Looper.getMainLooper
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -23,7 +25,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -34,11 +35,10 @@ import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -49,21 +49,39 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.suraksha.app.R
+import com.suraksha.app.domain.model.PoliceStation
+import com.suraksha.app.domain.model.Rating
+import com.suraksha.app.presentation.theme.Purple40
+import com.suraksha.app.presentation.theme.White
+import com.suraksha.app.presentation.theme.buttonColorEnd
+import com.suraksha.app.presentation.theme.buttonColorStart
+import com.suraksha.app.presentation.theme.colorGrayBold
+import com.suraksha.app.presentation.theme.colorGrayLight
+import com.suraksha.app.presentation.theme.negativeColor
+import com.suraksha.app.presentation.theme.positiveColor
+import com.suraksha.app.utility.Constants
+import com.suraksha.app.utility.DialogBox
+import com.suraksha.app.utility.PoliceStationBottomSheet
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.CameraState
@@ -78,21 +96,6 @@ import org.maplibre.compose.style.BaseStyle
 import org.maplibre.compose.style.rememberStyleState
 import org.maplibre.spatialk.geojson.Position
 import kotlin.time.Duration.Companion.seconds
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import com.suraksha.app.domain.model.Rating
-import com.suraksha.app.presentation.theme.Purple40
-import com.suraksha.app.presentation.theme.White
-import com.suraksha.app.presentation.theme.buttonColorEnd
-import com.suraksha.app.presentation.theme.buttonColorStart
-import com.suraksha.app.presentation.theme.colorGrayBold
-import com.suraksha.app.presentation.theme.colorGrayLight
-import com.suraksha.app.presentation.theme.negativeColor
-import com.suraksha.app.presentation.theme.positiveColor
-import com.suraksha.app.utility.BottomSheet
-import com.suraksha.app.utility.DialogBox
-import kotlinx.coroutines.delay
-import kotlin.io.path.Path
 
 private const val DEFAULT_ZOOM = 15.0
 private const val ANIMATION_DURATION_SECONDS = 3
@@ -224,16 +227,7 @@ fun MapScreen(viewModel: MapScreenVM = hiltViewModel()) {
         )
     }
 
-    if (showPoliceBottomSheet){
-        BottomSheet(
-            modifier = Modifier,
-            title = stringResource(R.string.nearby_police_station),
-            onDismissRequest = { showPoliceBottomSheet = false },
-            content = {}
-        )
-    }
-
-    if (showUnsafeAreaDialog){
+    if (showUnsafeAreaDialog) {
         DialogBox(
             onDismiss = { showUnsafeAreaDialog = false },
             title = stringResource(R.string.tell_us_what_happened)
@@ -335,15 +329,63 @@ fun MapScreen(viewModel: MapScreenVM = hiltViewModel()) {
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
+        var showProgress by remember { mutableStateOf(false) }
+        var errorStatus by remember { mutableStateOf(false) }
+        var policeStations by remember { mutableStateOf<List<PoliceStation>>(emptyList()) }
+        var loadingKey by remember { mutableStateOf(0) }
+
+        // This will trigger every time loadingKey changes
+        LaunchedEffect(loadingKey) {
+            if (loadingKey > 0) {
+                val lat = location?.latitude
+                val lon = location?.longitude
+
+                if (lat != null && lon != null) {
+                    showProgress = true
+                    policeStations = emptyList()
+
+                    viewModel.findNearbyPoliceStations(
+                        latitude = lat,
+                        longitude = lon,
+                        radiusKm = 50,
+                        onSuccess = {
+                            showProgress = false
+                            policeStations = it
+                        },
+                        onError = {
+                            showProgress = false
+                            errorStatus = true
+                        }
+                    )
+                } else {
+                    showProgress = false
+                }
+            }
+        }
+
+        if (showPoliceBottomSheet && policeStations.isNotEmpty() && !showProgress) {
+            PoliceStationBottomSheet(
+                policeStationList = policeStations,
+                onDismissRequest = {
+                    showPoliceBottomSheet = false
+                    policeStations = emptyList()
+                    showProgress = false
+                }
+            )
+        }
+
+
         MaplibreMap(
             cameraState = cameraState,
             styleState = styleState,
             options = MapOptions(ornamentOptions = OrnamentOptions.OnlyLogo),
             baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/liberty")
         )
+
         position?.let { pos ->
             MapOverlays(cameraState = cameraState, position = pos, address = address)
         }
+
         if (!permissionsState.allPermissionsGranted) {
             Text(
                 text = "Location permission required",
@@ -354,8 +396,12 @@ fun MapScreen(viewModel: MapScreenVM = hiltViewModel()) {
             )
         }
         BottomButtons(
-            onRateClicked = {showRateDialog = true},
-            onPoliceClicked = {showPoliceBottomSheet = true}
+            onRateClicked = { showRateDialog = true },
+            onPoliceClicked = {
+                viewModel.fetchCurrentLocation()
+                showPoliceBottomSheet = true
+                loadingKey++
+            }
         )
         SafetyRatingCard(
             safePercent = safePercent,
@@ -365,7 +411,100 @@ fun MapScreen(viewModel: MapScreenVM = hiltViewModel()) {
         )
         if (ratingSaved) {
             RatingSavedToast(
-                message = "Thank you! Your response has been saved."
+                message = "Thank you! Your response has been saved.",
+                status = Constants.STATUS_POSITIVE
+            )
+        }
+
+        if (showProgress) {
+            println("Rendering progress bar")
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f)),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressBar(showProgress = remember { mutableStateOf(true) })
+            }
+        }
+
+        if (errorStatus) {
+            Handler(getMainLooper()).postDelayed({ errorStatus = false }, 1000)
+            RatingSavedToast(
+                message = "Something went wrong",
+                status = Constants.STATUS_NEGATIVE
+            )
+        }
+
+    }
+}
+
+
+@Composable
+fun CircularProgressBar(
+    modifier: Modifier = Modifier,
+    strokeWidth: Dp = 16.dp,
+    backgroundColor: Color = Color(0xFF6B6B6B),
+    progressColor: Color = Color.White,
+    size: Dp = 100.dp,
+    durationMillis: Int = 1000,
+    showProgress: MutableState<Boolean>,
+) {
+    var progress by remember { mutableStateOf(0f) }
+
+    LaunchedEffect(showProgress) {
+        while (showProgress.value) {
+            animate(
+                initialValue = 0f,
+                targetValue = 1f,
+                animationSpec = tween(
+                    durationMillis = durationMillis,
+                    easing = LinearEasing
+                )
+            ) { value, _ ->
+                progress = value
+            }
+        }
+    }
+
+    if (showProgress.value) {
+        Canvas(
+            modifier = modifier.size(size)
+        ) {
+            val canvasSize = size.toPx()
+            val radius = (canvasSize / 2) - (strokeWidth.toPx() / 2)
+            val center = Offset(canvasSize / 2, canvasSize / 2)
+
+            drawArc(
+                color = backgroundColor,
+                startAngle = 0f,
+                sweepAngle = 360f,
+                useCenter = false,
+                topLeft = Offset(
+                    center.x - radius,
+                    center.y - radius
+                ),
+                size = Size(radius * 2, radius * 2),
+                style = Stroke(
+                    width = strokeWidth.toPx(),
+                    cap = StrokeCap.Round
+                )
+            )
+
+            drawArc(
+                color = progressColor,
+                startAngle = -90f,
+                sweepAngle = 360f * progress,
+                useCenter = false,
+                topLeft = Offset(
+                    center.x - radius,
+                    center.y - radius
+                ),
+                size = Size(radius * 2, radius * 2),
+                style = Stroke(
+                    width = strokeWidth.toPx(),
+                    cap = StrokeCap.Round
+                )
             )
         }
     }
@@ -374,7 +513,7 @@ fun MapScreen(viewModel: MapScreenVM = hiltViewModel()) {
 @Composable
 fun BoxScope.BottomButtons(
     onRateClicked: () -> Unit = {},
-    onPoliceClicked: () -> Unit = {}
+    onPoliceClicked: () -> Unit = {},
 ) {
     Row(
         modifier = Modifier
@@ -562,23 +701,26 @@ private fun MapOverlays(
 @Composable
 fun RatingSavedToast(
     message: String,
-    modifier: Modifier = Modifier
+    status: String,
+    modifier: Modifier = Modifier,
 ) {
     Box(
         modifier = modifier
             .fillMaxWidth()
             .padding(top = 84.dp, bottom = 32.dp, end = 32.dp, start = 32.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(positiveColor)
+            .background(if (status == Constants.STATUS_POSITIVE) positiveColor else negativeColor)
             .padding(24.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(13.dp)
-            )
+            if (status == Constants.STATUS_POSITIVE) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(13.dp)
+                )
+            }
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = message,

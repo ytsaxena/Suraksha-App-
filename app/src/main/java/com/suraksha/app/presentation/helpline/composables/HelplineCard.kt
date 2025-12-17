@@ -22,7 +22,6 @@ import androidx.compose.ui.unit.sp
 import com.suraksha.app.R
 import com.suraksha.app.presentation.theme.colorGrayBold
 import com.suraksha.app.presentation.theme.colorGrayLight
-import com.suraksha.app.utility.loadHelplines
 
 @Composable
 fun HelplineCard(
@@ -105,13 +104,13 @@ fun CircleIconButton(
     contentDescription: String,
     backgroundColor: Color,
     iconTint: Color = Color.White,
-    onClick: () -> Unit
+    onClick: (() -> Unit)?
 ) {
     Box(
         modifier = Modifier
             .size(40.dp)
             .background(backgroundColor, shape = CircleShape)
-            .clickable { onClick() },
+            .clickable { onClick?.invoke() },
         contentAlignment = Alignment.Center
     ) {
         Icon(
@@ -128,7 +127,7 @@ fun CircleIconButton(
     drawableRes: Int,
     contentDescription: String,
     backgroundColor: Color,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)?,
     enabled: Boolean = true,
 ) {
 
@@ -138,7 +137,7 @@ fun CircleIconButton(
         modifier = Modifier
             .size(40.dp)
            .background(backgroundColor, shape = CircleShape)
-            .clickable(enabled = enabled) { onClick() },
+            .clickable(enabled = enabled) { onClick?.invoke() },
         contentAlignment = Alignment.Center
     ) {
         Image(
