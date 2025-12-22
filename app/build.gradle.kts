@@ -87,4 +87,7 @@ dependencies {
 
     // https://mvnrepository.com/artifact/androidx.compose.material/material-icons-extended
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
+
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
 }

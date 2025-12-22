@@ -1,19 +1,21 @@
 package com.suraksha.app.presentation.map
 
-import android.content.Context
-import android.location.Geocoder
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.suraksha.app.domain.MapRepository
 import com.suraksha.app.domain.model.AppLocation
+import com.suraksha.app.domain.model.PoliceStation
 import com.suraksha.app.domain.model.Rating
+import com.suraksha.app.domain.util.Error
+import com.suraksha.app.domain.util.onError
+import com.suraksha.app.domain.util.onSuccess
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.util.Locale
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -97,4 +99,20 @@ class MapScreenVM @Inject constructor(
 
         return matches.lastOrNull()?.value
     }
+
+    fun findNearbyPoliceStations(
+        latitude: Double,
+        longitude: Double,
+        radiusKm: Int,
+        onSuccess: (List<PoliceStation>) -> Unit,
+        onError: (Error) -> Unit,
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val res = mapRepository.findNearbyPoliceStations(latitude, longitude, radiusKm)
+            withContext(Dispatchers.Main) {
+                res.onSuccess { onSuccess(it) }.onError { onError(it) }
+            }
+        }
+    }
+
 }

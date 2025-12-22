@@ -79,8 +79,7 @@ fun SOSIntroScreen(
 
     Box(
         modifier = modifier
-            .fillMaxSize()
-            .border(1.dp,Color.DarkGray),
+            .fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
 //        CircularProgressIndicator()
@@ -90,8 +89,7 @@ fun SOSIntroScreen(
         modifier = Modifier
 //            .systemBarsPadding()
             .fillMaxSize()
-            .padding(top = 32.dp, start = 16.dp, end = 16.dp)
-            .border(1.dp,Color.Blue),
+            .padding(top = 32.dp, start = 16.dp, end = 16.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ){
