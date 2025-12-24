@@ -1,7 +1,6 @@
 package com.suraksha.app.presentation.sos.intro
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Sos
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -27,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -47,7 +49,6 @@ import com.suraksha.app.presentation.theme.cameraColor
 import com.suraksha.app.presentation.theme.colorGrayBold
 import com.suraksha.app.presentation.theme.colorGrayLight
 import com.suraksha.app.presentation.theme.smsColor
-import com.suraksha.app.presentation.theme.whatsappColor
 
 @Composable
 fun SOSIntroScreen(
@@ -129,17 +130,17 @@ fun SOSIntroScreen(
             tint = smsColor
         )
         DescriptionCards(
-            title = stringResource(R.string.auto_photo_capture),
-            description = stringResource(R.string.auto_photo_capture_description),
-            icon = painterResource(R.drawable.ic_camera),
+            title = stringResource(R.string.sos_alarm),
+            description = stringResource(R.string.sos_alarm_description),
+            icon = rememberVectorPainter(Icons.Default.Sos),
             tint = cameraColor
         )
-        DescriptionCards(
-            title = stringResource(R.string.whatsapp_integration),
-            description = stringResource(R.string.whataspp_integration_description),
-            icon = painterResource(R.drawable.ic_whatsapp),
-            tint = whatsappColor
-        )
+//        DescriptionCards(
+//            title = stringResource(R.string.whatsapp_integration),
+//            description = stringResource(R.string.whataspp_integration_description),
+//            icon = painterResource(R.drawable.ic_whatsapp),
+//            tint = whatsappColor
+//        )
         Button(
             modifier = Modifier
                 .padding(start = 16.dp, end = 16.dp, top = 20.dp)
