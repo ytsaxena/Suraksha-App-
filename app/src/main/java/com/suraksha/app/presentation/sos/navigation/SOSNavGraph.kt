@@ -60,7 +60,7 @@ fun SOSNavGraph(
                         popUpTo(0) { inclusive = true }
                     }
                 },
-                selectedContacts = contactList?.toSet() ?: emptySet()
+                // selectedContacts = contactList?.toSet() ?: emptySet()
             )
         }
 
