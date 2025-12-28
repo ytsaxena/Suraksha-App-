@@ -426,6 +426,7 @@ fun ContactItem(contact: Contact) {
 
 @Composable
 fun SoSButton1(afterSosPressedDelay: () -> Unit, onSosPressed: () -> Unit) {
+    var isEnabled by remember { mutableStateOf(true) }
     Box(
         modifier = Modifier
             .padding(vertical = 20.dp)
@@ -460,7 +461,8 @@ fun SoSButton1(afterSosPressedDelay: () -> Unit, onSosPressed: () -> Unit) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .clickable {
+                    .clickable(enabled = isEnabled) {
+                        isEnabled = false
                         coroutineScope.launch {
                             onSosPressed()
                             for (sec in 3 downTo 1) {
@@ -470,6 +472,7 @@ fun SoSButton1(afterSosPressedDelay: () -> Unit, onSosPressed: () -> Unit) {
                             }
                             afterSosPressedDelay()
                             countDownTimer = -1
+                            isEnabled = true
                         }
                     },
                 verticalArrangement = Arrangement.Center,
