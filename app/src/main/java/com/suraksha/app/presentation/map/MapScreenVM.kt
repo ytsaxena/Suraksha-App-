@@ -55,8 +55,10 @@ class MapScreenVM @Inject constructor(
     fun saveLocationRating(rating: Rating, address: String){
         viewModelScope.launch {
             try {
-                mapRepository.saveLocationRating(rating, pincode = extractPincode(address) ?: "")
+                val pincode = extractPincode(address) ?: return@launch
+                mapRepository.saveLocationRating(rating, pincode = pincode)
                 _ratingSaved.value = true
+                fetchSafetyRating(pincode)
             } catch (e: Exception) {
                 Log.e("MapScreenVM", "Error saving rating", e)
             }

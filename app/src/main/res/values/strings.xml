@@ -4,8 +4,8 @@
     <string name="add_emergency_contact_description">Set up your emergency contact to enable SOS features.</string>
     <string name="instant_sms_alert">Instant SMS Alert</string>
     <string name="instant_sms_alert_description">Send location &amp; emergency message</string>
-    <string name="auto_photo_capture">Auto Photo Capture</string>
-    <string name="auto_photo_capture_description">Front &amp; back camera photos</string>
+    <string name="sos_alarm">SOS Alarm</string>
+    <string name="sos_alarm_description">Raise an SOS alarm instantly</string>
     <string name="whatsapp_integration">WhatsApp Integration</string>
     <string name="whataspp_integration_description">Share photos &amp; live location</string>
     <string name="select_contact">Select from Contact List</string>

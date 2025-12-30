@@ -40,6 +40,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -48,6 +49,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -242,6 +244,7 @@ fun MapScreen(viewModel: MapScreenVM = hiltViewModel()) {
             )
 
             val selected = remember { mutableStateListOf(false, false, false, false, false) }
+            val canSubmit by remember { derivedStateOf { selected.any { it } } }
 
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -287,21 +290,20 @@ fun MapScreen(viewModel: MapScreenVM = hiltViewModel()) {
                     contentPadding = PaddingValues(0.dp),
                     shape = RoundedCornerShape(4.dp)
                 ) {
+                    val disabledAlpha = 0.6f
                     Box(
                         modifier = Modifier
+                            .alpha(if(canSubmit) 1f else disabledAlpha)
                             .weight(1f)
                             .height(48.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(
-                                brush = Brush.linearGradient(
-                                    colors = listOf(buttonColorStart, buttonColorEnd)
-                                )
-                            )
-                            .clickable(onClick = {
+                            .background(brush = Brush.linearGradient(colors = listOf(buttonColorStart, buttonColorEnd)))
+                            .clickable(enabled = canSubmit) {
                                 viewModel.saveLocationRating(Rating.UNSAFE, address ?: "")
                                 showUnsafeAreaDialog = false
-                            }),
-                        contentAlignment = Alignment.Center
+                            },
+                        contentAlignment = Alignment.Center,
+
                     ) {
                         Text(
                             text = stringResource(R.string.submit_report),
@@ -374,7 +376,6 @@ fun MapScreen(viewModel: MapScreenVM = hiltViewModel()) {
             )
         }
 
-
         MaplibreMap(
             cameraState = cameraState,
             styleState = styleState,
@@ -403,12 +404,14 @@ fun MapScreen(viewModel: MapScreenVM = hiltViewModel()) {
                 loadingKey++
             }
         )
-        SafetyRatingCard(
-            safePercent = safePercent,
-            unsafePercent = unsafePercent,
-            onReloadClicked = { viewModel.reloadSafetyRating() },
-            modifier = Modifier
-        )
+        if (safePercent != null && unsafePercent != null){
+            SafetyRatingCard(
+                safePercent = safePercent,
+                unsafePercent = unsafePercent,
+                onReloadClicked = { viewModel.reloadSafetyRating() },
+                modifier = Modifier
+            )
+        }
         if (ratingSaved) {
             RatingSavedToast(
                 message = "Thank you! Your response has been saved.",

@@ -1,10 +1,12 @@
 package com.suraksha.app.presentation.navigaiton
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.suraksha.app.R
 import com.suraksha.app.presentation.helpline.HelplineScreen
 import com.suraksha.app.presentation.map.MapScreen
@@ -27,6 +29,8 @@ fun AppNavHost(
     startDestination: Destination,
     navHostController: NavHostController
 ) {
+    val navBackStackEntry by navHostController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
     NavHost(
         modifier = modifier,
         navController = navHostController,
@@ -35,11 +39,22 @@ fun AppNavHost(
         Destination.entries.forEach { destination ->
             composable(destination.route) {
                 when (destination) {
-                    Destination.MAP -> MapScreen()
+                    Destination.MAP ->
+                        MapRoute(
+                            isVisible = currentRoute == Destination.MAP.route
+                        )
                     Destination.SOS -> SOSNavGraph()
                     Destination.HELPLINE -> HelplineScreen()
                 }
             }
         }
     }
+}
+
+@Composable
+fun MapRoute(
+    isVisible: Boolean
+) {
+    if (!isVisible) return
+    MapScreen()
 }

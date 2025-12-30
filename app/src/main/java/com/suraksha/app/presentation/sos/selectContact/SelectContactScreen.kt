@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -50,6 +51,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -66,6 +68,7 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.suraksha.app.R
 import com.suraksha.app.domain.model.Contact
+import com.suraksha.app.domain.model.Rating
 import com.suraksha.app.presentation.sos.components.ContactCard
 import com.suraksha.app.presentation.theme.White
 import com.suraksha.app.presentation.theme.buttonColorEnd
@@ -80,13 +83,10 @@ fun SelectContactScreen(
     viewModel: SelectContactVM = hiltViewModel(),
     modifier: Modifier = Modifier,
     navigateToSOSScreen: (contactList: List<Contact>) -> Unit = {},
-    onBackClicked: () -> Unit = {},
-    selectedContacts : Set<Contact> = emptySet(),
+    onBackClicked: () -> Unit = {}
 ) {
     LaunchedEffect(Unit) {
-        if(selectedContacts.isNotEmpty()) {
-            viewModel.loadSelectedContact(selectedContacts)
-        }
+        viewModel.loadSelectedContact()
         viewModel.events.collect { event ->
             when (event) {
                 is SelectContactNavEvent.NavigateToSOSScreen -> navigateToSOSScreen(event.contactList)
@@ -103,7 +103,8 @@ fun SelectContactScreen(
         if (isGranted) {
             viewModel.fetchContacts()
         } else {
-            Toast.makeText(context, "Permission required to show contacts", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Permission required to show contacts", Toast.LENGTH_SHORT)
+                .show()
         }
     }
 
@@ -113,6 +114,7 @@ fun SelectContactScreen(
             ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) -> {
                 viewModel.fetchContacts()
             }
+
             else -> {
                 permissionLauncher.launch(Manifest.permission.READ_CONTACTS)
             }
@@ -234,7 +236,7 @@ fun SelectContactScreen(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = {
-                    if(it.length <= 20) {
+                    if (it.length <= 20) {
                         searchQuery = it
                         if (searchQuery.isEmpty()) {
                             contactsBasedOnQuery = allContacts
@@ -303,59 +305,97 @@ fun SelectContactScreen(
                     )
                 }
             }
-            Button(
-                modifier = Modifier
-                    .padding(
-                        start = 20.dp,
-                        end = 20.dp,
-                        bottom = 8.dp
-                    )
-                    .fillMaxWidth(),
-                onClick = { showDialog = true },
-                elevation = null,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Transparent,
-                    contentColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
-                    disabledContentColor = Color.Transparent
-                ),
-                contentPadding = PaddingValues(0.dp),
-                shape = RoundedCornerShape(4.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .background(
-                            brush = Brush.linearGradient(
-                                colors = listOf(
-                                    buttonColorStart,
-                                    buttonColorEnd
-                                )
-                            ),
-                            shape = RoundedCornerShape(4.dp)
-                        )
-                        .fillMaxWidth()
-                        .padding(vertical = 12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Save Selected Contacts (${viewModel.selectedContacts.size})",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = White,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
+            val enabled = viewModel.selectedContacts.size >= 3
+            GradientButton(
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp),
+                enabled = enabled,
+                onClick = {showDialog = true},
+                content = "Save Selected Contacts (${viewModel.selectedContacts.size})"
+            )
         }
     }
 }
+
+@Composable
+fun GradientButton(
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+    content: String,
+) {
+    Button(
+        modifier = modifier,
+        onClick = onClick,
+        elevation = null,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.Transparent,
+            contentColor = Color.Transparent,
+            disabledContainerColor = Color.Transparent,
+            disabledContentColor = Color.Transparent
+        ),
+        enabled = enabled,
+        contentPadding = PaddingValues(0.dp),
+        shape = RoundedCornerShape(4.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .height(48.dp)
+                .alpha(if (enabled) 1f else 0.6f)
+                .clip(RoundedCornerShape(12.dp))
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            buttonColorStart,
+                            buttonColorEnd
+                        )
+                    )
+                ),
+            contentAlignment = Alignment.Center,
+
+            ) {
+            Text(
+                text = content,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                color = White,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun GradientButtonPrev() {
+    Column(
+        Modifier
+            .systemBarsPadding()
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        var enabled by remember { mutableStateOf(false) }
+        GradientButton(onClick = { enabled = !enabled }, content = "Save")
+        GradientButton(onClick = {}, content = "Save", enabled = false)
+        GradientButton(onClick = { }, content = "Save $enabled", enabled = enabled)
+    }
+}
+
+fun Color.button(enabled: Boolean) = if (enabled) this else this.copy(0.6f)
 
 private fun filterContacts(
     searchQuery: String,
     allContacts: List<Contact>,
 ): List<Contact> {
     val filteredContacts =
-        allContacts.filter { it.name.contains(searchQuery , ignoreCase = true) || it.phoneNumber.contains(searchQuery, ignoreCase = true) }
+        allContacts.filter {
+            it.name.contains(
+                searchQuery,
+                ignoreCase = true
+            ) || it.phoneNumber.contains(searchQuery, ignoreCase = true)
+        }
     return filteredContacts
 }
 
