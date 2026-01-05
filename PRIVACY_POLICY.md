@@ -53,7 +53,7 @@ Users can stop all data collection by uninstalling the app
 We may update this Privacy Policy from time to time. Any changes will be reflected on this page with an updated date.
 
 10. Contact Us
-If you have any questions or concerns about this Privacy Policy, please contact us:
+If you have any questions or concerns about this Privacy Policy or if you want to delete your data , please contact us:
 Developer Name: Sachin Saxena
 App Name: Suraksha App
 Email: suraksha.in.app@gmail.com
