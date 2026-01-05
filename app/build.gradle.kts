@@ -10,13 +10,13 @@ plugins {
 }
 
 android {
-    namespace = "com.suraksha.app"
+    namespace = "com.suraksha_app.app"
     compileSdk {
         version = release(36)
     }
 
     defaultConfig {
-        applicationId = "com.suraksha.app"
+        applicationId = "com.suraksha_app.app"
         minSdk = 30
         targetSdk = 36
         versionCode = 1
@@ -26,6 +26,9 @@ android {
     }
 
     buildTypes {
+        debug {
+            isMinifyEnabled = false
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -89,5 +92,5 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
 
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
-
+    //lintChecks(libs.insights.lint)
 }

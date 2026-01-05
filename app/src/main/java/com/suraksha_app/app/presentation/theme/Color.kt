@@ -1,0 +1,35 @@
+package com.suraksha_app.app.presentation.theme
+
+import androidx.compose.ui.graphics.Color
+
+val Purple80 = Color(0xFFD0BCFF)
+val PurpleGrey80 = Color(0xFFCCC2DC)
+val Pink80 = Color(0xFFEFB8C8)
+
+val Purple40 = Color(0xFF6650a4)
+val PurpleGrey40 = Color(0xFF625b71)
+val Pink40 = Color(0xFF7D5260)
+val White = Color.White
+val safetyCardBackgroundColor = Color(0xFF5B61FF)
+val colorGrayLight = Color(0xFF4A4A68)
+val colorGrayBold= Color(0xFF1E1E2D)
+val alertColor = Color(0xFFFF3B30)
+val cameraColor = Color(0xFFFF8DE6)
+val whatsappColor = Color(0xFF4CAF50)
+val whatsappColor37 = Color(0x5E4CAF50)
+val whatsappColor5 = Color(0x0D4CAF50)
+val smsColor = Color(0xFFA213EA)
+val buttonColorStart = Color(0xFFD78AF9)
+val buttonColorEnd = Color(0xFFB37FF8)
+val grayColor = Color(0xFF525050)
+val positiveColor = Color(0xFF4CAF50)
+val negativeColor = Color(0xFFFF3B30)
+val gray37Color = Color(0x5E525050)
+val backgroundColor = Color(0xFFF9F9F9)
+val lightGreenColor = Color(0xFF00FF0A)
+val lightGreen40Color = Color(0x6600FF0A)
+val switchOffBorderColor = Color(0xFFD6D6D6)
+val switchOnBorderColor = Color(0xFF8BED8F)
+val switchUnCheckTrackColor = Color(0xFFF0F0F0)
+val switchUnCheckThumbColor = Color(0xFFFEFEFE)
+val violetBlueColor = Color(0xFF5B61FF)
